@@ -4,6 +4,7 @@ import com.courthub.common.dto.CreateUserDto;
 import com.courthub.common.dto.UpdateUserDto;
 import com.courthub.common.dto.UserDto;
 import com.courthub.common.dto.ValidateCredentialsDto;
+import com.courthub.user.config.JwtAuthenticationToken;
 import com.courthub.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -14,6 +15,8 @@ import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.HashMap;
@@ -53,6 +56,27 @@ public class UserController {
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<UserDto> getUserById(@PathVariable UUID id) {
         UserDto user = userService.getUserById(id);
+        return ResponseEntity.ok(user);
+    }
+
+    @GetMapping("/me")
+    @Operation(summary = "Get current authenticated user", description = "Returns the information of the currently authenticated user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User found"),
+            @ApiResponse(responseCode = "404", description = "User not found"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<UserDto> getCurrentUser() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null || !(authentication instanceof JwtAuthenticationToken)) {
+            return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        }
+        
+        JwtAuthenticationToken jwtAuth = (JwtAuthenticationToken) authentication;
+        UUID userId = jwtAuth.getUserId();
+        
+        UserDto user = userService.getUserById(userId);
         return ResponseEntity.ok(user);
     }
 
