@@ -11,21 +11,25 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.SimpleUrlAuthenticationSuccessHandler;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
 
     private final OAuth2SuccessHandler oauth2SuccessHandler;
+    private final CorsConfigurationSource corsConfigurationSource;
 
     @Autowired
-    public SecurityConfig(@Lazy OAuth2SuccessHandler oauth2SuccessHandler) {
+    public SecurityConfig(@Lazy OAuth2SuccessHandler oauth2SuccessHandler, CorsConfigurationSource corsConfigurationSource) {
         this.oauth2SuccessHandler = oauth2SuccessHandler;
+        this.corsConfigurationSource = corsConfigurationSource;
     }
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            .cors(cors -> cors.configurationSource(corsConfigurationSource))
             .csrf(csrf -> csrf.disable())
             .sessionManagement(session -> session
                 .sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)
