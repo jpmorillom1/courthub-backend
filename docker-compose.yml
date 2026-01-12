@@ -1,6 +1,38 @@
-version: '3.8'
+version: "3.8"
 
 services:
+  # Zookeeper (Kafka dependency)
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: courthub-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - courthub-network
+
+  # Kafka Broker
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: courthub-kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+    ports:
+      - "9092:9092"
+    networks:
+      - courthub-network
+
   # PostgreSQL Database
   postgres:
     image: postgres:16-alpine
@@ -61,6 +93,27 @@ services:
     depends_on:
       - postgres
       - user-service
+    networks:
+      - courthub-network
+    restart: unless-stopped
+
+  # Court Service
+  court-service:
+    build:
+      context: .
+      dockerfile: services/court-service/Dockerfile
+    container_name: courthub-court-service
+    environment:
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      JWT_SECRET: your-256-bit-secret-key-must-be-at-least-256-bits-long-for-hmac-sha256
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/courthub_court
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
     networks:
       - courthub-network
     restart: unless-stopped

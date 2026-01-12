@@ -1,0 +1,41 @@
+spring:
+  application:
+    name: court-service
+
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/courthub_court}
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgres}
+    driver-class-name: org.postgresql.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        spring.json.add.type.headers: false
+
+server:
+  port: 8082
+
+jwt:
+  secret: ${JWT_SECRET:your-256-bit-secret-key-must-be-at-least-256-bits-long-for-hmac-sha256}
+  access-token-expiration-minutes: 15
+  refresh-token-expiration-days: 30
+
+kafka:
+  topics:
+    court-created: court.created
+    court-updated: court.updated
+    court-status-changed: court.status.changed
+    court-schedule-updated: court.schedule.updated
