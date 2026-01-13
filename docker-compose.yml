@@ -70,6 +70,31 @@ services:
       - courthub-network
     restart: unless-stopped
 
+  # Booking Service
+  booking-service:
+    build:
+      context: .
+      dockerfile: services/booking-service/Dockerfile
+    container_name: courthub-booking-service
+    environment:
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      JWT_SECRET: your-256-bit-secret-key-must-be-at-least-256-bits-long-for-hmac-sha256
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/courthub_booking
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      SLOT_DURATION_MINUTES: 60
+      SLOT_GENERATION_DAYS_FORWARD: 7
+    ports:
+      - "8083:8083"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    networks:
+      - courthub-network
+    restart: unless-stopped
+
   # Auth Service
   auth-service:
     build:

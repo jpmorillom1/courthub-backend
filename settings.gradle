@@ -14,5 +14,6 @@ include(
     "libs:common:common-web",
     "services:auth-service",
     "services:user-service",
-    "services:court-service"
+    "services:court-service",
+    "services:booking-service"
 )
