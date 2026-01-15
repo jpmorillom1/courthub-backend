@@ -141,6 +141,27 @@ services:
       - courthub-network
     restart: unless-stopped
 
+  # Realtime Adapter Service
+  realtime-adapter-service:
+    build:
+      context: .
+      dockerfile: services/realtime-adapter-service/Dockerfile
+    container_name: courthub-realtime-adapter-service
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+    #      FIREBASE_DATABASE_URL: ${FIREBASE_DATABASE_URL:-}
+    #      FIREBASE_CREDENTIALS_PATH: ${FIREBASE_CREDENTIALS_PATH:-/app/config/firebase-service-account.json}
+    ports:
+      - "8084:8084"
+    depends_on:
+      kafka:
+        condition: service_started
+    networks:
+      - courthub-network
+    restart: unless-stopped
+    volumes:
+      - ./config:/app/config:ro
+
 volumes:
   postgres_data:
 
