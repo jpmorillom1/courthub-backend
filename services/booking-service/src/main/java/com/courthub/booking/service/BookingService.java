@@ -100,7 +100,6 @@ public class BookingService {
         timeSlot.setStatus(TimeSlotStatus.AVAILABLE);
         timeSlotRepository.save(timeSlot);
 
-        // Se envía el objeto timeSlot para sincronización correcta con Firebase
         bookingEventProducer.sendBookingCancelled(saved, timeSlot);
 
         return toBookingResponse(saved, timeSlot);

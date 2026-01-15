@@ -34,7 +34,6 @@ public class BookingEventProducer {
     }
 
     private BookingEventPayload mapBookingEvent(Booking booking, TimeSlot timeSlot) {
-        // Usamos el constructor completo del Payload con los datos del TimeSlot
         return new BookingEventPayload(
                 booking.getId(),
                 booking.getTimeSlotId(),
