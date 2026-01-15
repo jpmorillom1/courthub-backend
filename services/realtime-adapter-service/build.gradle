@@ -1,0 +1,28 @@
+plugins {
+    id 'org.springframework.boot'
+}
+
+dependencies {
+    // Spring Boot (sin web si es adapter puro)
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    implementation 'org.springframework.kafka:spring-kafka'
+
+    // Firebase
+    implementation 'com.google.firebase:firebase-admin:9.2.0'
+
+    // Common libs
+    implementation project(':libs:common:common-dto')
+    implementation project(':libs:common:common-exception')
+    implementation project(':libs:common:common-web')
+
+    // OpenAPI (solo si expone endpoints)
+    implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.3.0'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
+    // Testing
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.kafka:spring-kafka'
+    testImplementation 'org.testcontainers:kafka'
+}
