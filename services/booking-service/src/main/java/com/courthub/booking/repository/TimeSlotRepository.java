@@ -31,4 +31,6 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, UUID> {
     @Modifying
     @Query("delete from TimeSlot ts where ts.courtId = :courtId and ts.date = :date and ts.status = :status")
     void deleteByCourtIdAndDateAndStatus(UUID courtId, LocalDate date, TimeSlotStatus status);
+
+    List<TimeSlot> findByDate(LocalDate date);
 }

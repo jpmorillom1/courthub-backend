@@ -82,6 +82,13 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
+    public List<AvailabilitySlotResponse> getAllSlotsByDate(LocalDate date) {
+        return timeSlotRepository.findByDate(date)
+                .stream()
+                .map(this::toAvailabilityResponse)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public BookingResponse cancelBooking(UUID bookingId) {
         Booking booking = bookingRepository.findById(bookingId)

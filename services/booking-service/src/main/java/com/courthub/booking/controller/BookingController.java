@@ -59,6 +59,17 @@ public class BookingController {
         return ResponseEntity.ok(slots);
     }
 
+    @GetMapping("/internal/slots-sync")
+    @Operation(summary = "Get all slots by date (internal)", description = "Retrieve all time slots (Available, Booked, or Blocked) for a given date - Internal endpoint for realtime synchronization")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "All slots returned")
+    })
+    public ResponseEntity<List<AvailabilitySlotResponse>> getAllSlotsByDate(
+            @RequestParam LocalDate date) {
+        List<AvailabilitySlotResponse> slots = bookingService.getAllSlotsByDate(date);
+        return ResponseEntity.ok(slots);
+    }
+
     @PatchMapping("/{id}/cancel")
     @Operation(summary = "Cancel booking", description = "Cancels an existing booking")
     @ApiResponses(value = {
