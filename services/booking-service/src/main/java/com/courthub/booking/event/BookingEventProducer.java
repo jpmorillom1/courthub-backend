@@ -1,6 +1,7 @@
 package com.courthub.booking.event;
 
 import com.courthub.booking.domain.Booking;
+import com.courthub.booking.domain.TimeSlot; 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
@@ -22,21 +23,27 @@ public class BookingEventProducer {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void sendBookingCreated(Booking booking) {
-        publishAfterCommit(bookingCreatedTopic, mapBookingEvent(booking));
+    
+    public void sendBookingCreated(Booking booking, TimeSlot timeSlot) {
+        publishAfterCommit(bookingCreatedTopic, mapBookingEvent(booking, timeSlot));
     }
 
-    public void sendBookingCancelled(Booking booking) {
-        publishAfterCommit(bookingCancelledTopic, mapBookingEvent(booking));
+    
+    public void sendBookingCancelled(Booking booking, TimeSlot timeSlot) {
+        publishAfterCommit(bookingCancelledTopic, mapBookingEvent(booking, timeSlot));
     }
 
-    private BookingEventPayload mapBookingEvent(Booking booking) {
+    private BookingEventPayload mapBookingEvent(Booking booking, TimeSlot timeSlot) {
+        // Usamos el constructor completo del Payload con los datos del TimeSlot
         return new BookingEventPayload(
                 booking.getId(),
                 booking.getTimeSlotId(),
                 booking.getCourtId(),
                 booking.getUserId(),
-                booking.getStatus().name()
+                timeSlot.getDate(),      
+                timeSlot.getStartTime(), 
+                timeSlot.getEndTime(),  
+                booking.getStatus()
         );
     }
 

@@ -1,6 +1,7 @@
 package com.courthub.booking.event;
 
 import com.courthub.booking.domain.BookingStatus;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -12,8 +13,11 @@ public class BookingEventPayload {
     private UUID timeSlotId;
     private UUID courtId;
     private UUID userId;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd")
     private LocalDate date;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss")
     private LocalTime startTime;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "HH:mm:ss")
     private LocalTime endTime;
     private BookingStatus status;
 
