@@ -1,0 +1,38 @@
+spring:
+  application:
+    name: realtime-adapter-service
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    consumer:
+      group-id: realtime-adapter-group
+      auto-offset-reset: earliest
+      enable-auto-commit: true
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    properties:
+      spring.json.trusted.packages: com.courthub.*
+
+server:
+  port: 8084
+  servlet:
+    context-path: /api/realtime
+
+firebase:
+  database-url: ${FIREBASE_DATABASE_URL}
+  credentials-path: "classpath:courthub-db8c7-firebase-adminsdk-fbsvc-c01bf8b26a.json"
+
+logging:
+  level:
+    root: INFO
+    com.courthub: DEBUG
+    org.springframework.kafka: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      show-details: always
