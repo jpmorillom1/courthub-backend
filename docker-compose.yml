@@ -191,10 +191,11 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       JWT_SECRET: your-256-bit-secret-key-must-be-at-least-256-bits-long-for-hmac-sha256
       USER_SERVICE_URL: http://user-service:8081
-#      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
-#      MAIL_PORT: ${MAIL_PORT:-587}
-#      MAIL_USERNAME: ${MAIL_USERNAME:-}
-#      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+      MAIL_PORT: ${MAIL_PORT:-587}
+      MAIL_USERNAME: ${MAIL_USERNAME:-}
+      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      HIVEMQ_BROKER_URL: ${HIVEMQ_BROKER_URL:-tcp://your-cluster.s1.eu.hivemq.cloud:8883}
       HIVEMQ_USERNAME: ${HIVEMQ_USERNAME:-}
       HIVEMQ_PASSWORD: ${HIVEMQ_PASSWORD:-}
     ports:
