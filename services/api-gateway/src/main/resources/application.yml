@@ -1,0 +1,34 @@
+server:
+  port: 9000
+
+spring:
+  application:
+    name: api-gateway
+
+  cloud:
+    gateway:
+      routes:
+        - id: auth-service
+          uri: ${AUTH_SERVICE_URL}
+          predicates:
+            - Path=/auth/**
+
+        - id: user-service
+          uri: ${USER_SERVICE_URL}
+          predicates:
+            - Path=/users/**
+
+        - id: court-service
+          uri: ${COURT_SERVICE_URL}
+          predicates:
+            - Path=/courts/**
+
+        - id: booking-service
+          uri: ${BOOKING_SERVICE_URL}
+          predicates:
+            - Path=/bookings/**
+
+        - id: notification-service
+          uri: ${NOTIFICATION_SERVICE_URL}
+          predicates:
+            - Path=/api/notifications/**
