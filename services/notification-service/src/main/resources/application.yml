@@ -1,0 +1,67 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: notification-service
+
+  # MongoDB Configuration
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/courthub_notification}
+      auto-index-creation: true
+
+  # Kafka Configuration
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:9092}
+    consumer:
+      group-id: notification-service-group
+      auto-offset-reset: earliest
+
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.json.type.mapping: "booking.created:com.courthub.notification.event.BookingEventPayload"
+
+  # Email Configuration
+  mail:
+    host: ${MAIL_HOST:sandbox.smtp.mailtrap.io}
+    port: ${MAIL_PORT:587}
+    username: ${MAIL_USERNAME}
+    password: ${MAIL_PASSWORD}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+            required: true
+          connectiontimeout:  60000
+          timeout:  60000
+          writetimeout:  60000
+
+# HiveMQ Cloud Configuration
+hivemq:
+  broker-url: ${HIVEMQ_BROKER_URL:tcp://broker.hivemq.com:1883}
+  username: ${HIVEMQ_USERNAME:}
+  password: ${HIVEMQ_PASSWORD:}
+  client-id: courthub-notification-service-${random.uuid}
+  topic: ${HIVEMQ_TOPIC:courthub-notifications}
+  qos: ${HIVEMQ_QOS:1}
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET:your-256-bit-secret-key-must-be-at-least-256-bits-long-for-hmac-sha256}
+
+# External Services
+services:
+  user-service:
+    url: ${USER_SERVICE_URL:http://localhost:8081}
+
+# Logging
+logging:
+  level:
+    com.courthub.notification: DEBUG
+    org.springframework.kafka: INFO
+    org.eclipse.paho: INFO
