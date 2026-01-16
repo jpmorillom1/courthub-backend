@@ -50,6 +50,24 @@ services:
     networks:
       - courthub-network
 
+  # MongoDB Database
+  mongodb:
+    image: mongo:7-jammy
+    container_name: courthub-mongodb
+    environment:
+      MONGO_INITDB_DATABASE: courthub_notification
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - courthub-network
+
   # User Service
   user-service:
     build:
@@ -162,8 +180,39 @@ services:
     volumes:
       - ./config:/app/config:ro
 
+  # Notification Service
+  notification-service:
+    build:
+      context: .
+      dockerfile: services/notification-service/Dockerfile
+    container_name: courthub-notification-service
+    environment:
+      MONGODB_URI: ${MONGODB_URI:-mongodb://mongodb:27017/courthub_notification}
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      JWT_SECRET: your-256-bit-secret-key-must-be-at-least-256-bits-long-for-hmac-sha256
+      USER_SERVICE_URL: http://user-service:8081
+#      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+#      MAIL_PORT: ${MAIL_PORT:-587}
+#      MAIL_USERNAME: ${MAIL_USERNAME:-}
+#      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+      HIVEMQ_USERNAME: ${HIVEMQ_USERNAME:-}
+      HIVEMQ_PASSWORD: ${HIVEMQ_PASSWORD:-}
+    ports:
+      - "8085:8085"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+      user-service:
+        condition: service_started
+    networks:
+      - courthub-network
+    restart: unless-stopped
+
 volumes:
   postgres_data:
+  mongodb_data:
 
 networks:
   courthub-network:
