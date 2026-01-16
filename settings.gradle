@@ -13,6 +13,7 @@ include(
     "libs:common:common-security",
     "libs:common:common-web",
     "services:auth-service",
+    "services:api-gateway",
     "services:user-service",
     "services:court-service",
     "services:booking-service",

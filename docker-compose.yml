@@ -191,13 +191,13 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       JWT_SECRET: your-256-bit-secret-key-must-be-at-least-256-bits-long-for-hmac-sha256
       USER_SERVICE_URL: http://user-service:8081
-      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
-      MAIL_PORT: ${MAIL_PORT:-587}
-      MAIL_USERNAME: ${MAIL_USERNAME:-}
-      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
-      HIVEMQ_BROKER_URL: ${HIVEMQ_BROKER_URL:-tcp://your-cluster.s1.eu.hivemq.cloud:8883}
-      HIVEMQ_USERNAME: ${HIVEMQ_USERNAME:-}
-      HIVEMQ_PASSWORD: ${HIVEMQ_PASSWORD:-}
+#      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+#      MAIL_PORT: ${MAIL_PORT:-587}
+#      MAIL_USERNAME: ${MAIL_USERNAME:-}
+#      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+#      HIVEMQ_BROKER_URL: ${HIVEMQ_BROKER_URL}
+#      HIVEMQ_USERNAME: ${HIVEMQ_USERNAME:-}
+#      HIVEMQ_PASSWORD: ${HIVEMQ_PASSWORD:-}
     ports:
       - "8085:8085"
     depends_on:
@@ -207,6 +207,30 @@ services:
         condition: service_started
       user-service:
         condition: service_started
+    networks:
+      - courthub-network
+    restart: unless-stopped
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: .
+      dockerfile: services/api-gateway/Dockerfile
+    container_name: courthub-api-gateway
+    environment:
+      AUTH_SERVICE_URL: http://auth-service:8080
+      USER_SERVICE_URL: http://user-service:8081
+      COURT_SERVICE_URL: http://court-service:8082
+      BOOKING_SERVICE_URL: http://booking-service:8083
+      NOTIFICATION_SERVICE_URL: http://notification-service:8085
+    ports:
+      - "9000:9000"
+    depends_on:
+      - auth-service
+      - user-service
+      - court-service
+      - booking-service
+      - notification-service
     networks:
       - courthub-network
     restart: unless-stopped
