@@ -20,10 +20,10 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, UUID> {
 
     List<TimeSlot> findByCourtIdAndDateAndStatusOrderByStartTime(UUID courtId, LocalDate date, TimeSlotStatus status);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+  //  @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<TimeSlot> findByCourtIdAndDateAndStartTime(UUID courtId, LocalDate date, LocalTime startTime);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+   // @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<TimeSlot> findById(UUID id);
 
     boolean existsByCourtIdAndDateAndStartTime(UUID courtId, LocalDate date, LocalTime startTime);

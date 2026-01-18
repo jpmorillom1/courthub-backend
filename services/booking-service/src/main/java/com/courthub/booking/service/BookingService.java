@@ -89,6 +89,25 @@ public class BookingService {
                 .collect(Collectors.toList());
     }
 
+    public List<BookingResponse> getBookingsByUserId(UUID userId) {
+        return bookingRepository.findByUserId(userId)
+                .stream()
+                .map(booking -> {
+                    TimeSlot timeSlot = timeSlotRepository.findById(booking.getTimeSlotId())
+                            .orElseThrow(() -> new NotFoundException("TimeSlot", booking.getTimeSlotId()));
+                    return toBookingResponse(booking, timeSlot);
+                })
+                .collect(Collectors.toList());
+    }
+
+    public BookingResponse getBookingById(UUID bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new NotFoundException("Booking", bookingId));
+        TimeSlot timeSlot = timeSlotRepository.findById(booking.getTimeSlotId())
+                .orElseThrow(() -> new NotFoundException("TimeSlot", booking.getTimeSlotId()));
+        return toBookingResponse(booking, timeSlot);
+    }
+
     @Transactional
     public BookingResponse cancelBooking(UUID bookingId) {
         Booking booking = bookingRepository.findById(bookingId)

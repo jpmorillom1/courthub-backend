@@ -46,9 +46,12 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
                 .requestMatchers(HttpMethod.GET, "/availability").permitAll()
+                .requestMatchers(HttpMethod.GET, "/bookings/user/{userId}").permitAll()
+                .requestMatchers(HttpMethod.GET, "/bookings/{id}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/bookings/internal/slots-sync").permitAll()
                 .requestMatchers(HttpMethod.POST, "/bookings").authenticated()
                 .requestMatchers(HttpMethod.PATCH, "/bookings/*/cancel").authenticated()
+
                 .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthenticationFilter(), UsernamePasswordAuthenticationFilter.class);

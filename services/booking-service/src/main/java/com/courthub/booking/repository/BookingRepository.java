@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,6 +16,8 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
 
     boolean existsByTimeSlotIdAndStatus(UUID timeSlotId, BookingStatus status);
 
-    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    List<Booking> findByUserId(UUID userId);
+
+   // @Lock(LockModeType.PESSIMISTIC_WRITE)
     Optional<Booking> findById(UUID id);
 }

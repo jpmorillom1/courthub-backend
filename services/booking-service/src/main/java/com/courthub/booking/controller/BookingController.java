@@ -70,6 +70,30 @@ public class BookingController {
         return ResponseEntity.ok(slots);
     }
 
+    @GetMapping("/user/{userId}")
+    @Operation(summary = "Get user bookings", description = "Retrieves all bookings for a specific user")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "User bookings returned"),
+            @ApiResponse(responseCode = "404", description = "No bookings found")
+    })
+    public ResponseEntity<List<BookingResponse>> getUserBookings(@PathVariable UUID userId) {
+        List<BookingResponse> bookings = bookingService.getBookingsByUserId(userId);
+        return ResponseEntity.ok(bookings);
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Get booking details", description = "Retrieves details of a specific booking")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Booking details returned"),
+            @ApiResponse(responseCode = "404", description = "Booking not found"),
+            @ApiResponse(responseCode = "401", description = "Unauthorized")
+    })
+    @SecurityRequirement(name = "Bearer Authentication")
+    public ResponseEntity<BookingResponse> getBookingById(@PathVariable UUID id) {
+        BookingResponse booking = bookingService.getBookingById(id);
+        return ResponseEntity.ok(booking);
+    }
+
     @PatchMapping("/{id}/cancel")
     @Operation(summary = "Cancel booking", description = "Cancels an existing booking")
     @ApiResponses(value = {
