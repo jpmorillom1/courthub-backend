@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,6 +34,14 @@ public class CourtController {
         this.courtService = courtService;
     }
 
+    @GetMapping("/sports")
+    @Operation(summary = "Get sport types", description = "Returns a list of all available sport types defined in the system.")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "List of sport types returned")
+    })
+    public ResponseEntity<List<SportType>> getSportTypes() {
+        return ResponseEntity.ok(Arrays.asList(SportType.values()));
+    }
     @PostMapping
     @Operation(summary = "Create court", description = "Creates a new court. Default status is ACTIVE.")
     @ApiResponses(value = {
