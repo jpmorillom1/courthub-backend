@@ -1,5 +1,3 @@
-version: "3.8"
-
 services:
   # Kafka Broker
 
@@ -113,6 +111,35 @@ services:
       - courthub-network
     restart: unless-stopped
 
+  # Payment Service
+  payment-service:
+    build:
+      context: .
+      dockerfile: services/payment-service/Dockerfile
+    container_name: courthub-payment-service
+    environment:
+      DB_USERNAME: postgres
+      DB_PASSWORD: postgres
+      JWT_SECRET: your-256-bit-secret-key-must-be-at-least-256-bits-long-for-hmac-sha256
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/courthub_payment
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      STRIPE_API_KEY: ${STRIPE_API_KEY:-your_stripe_api_key_here}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-your_stripe_webhook_secret_here}
+      STRIPE_SUCCESS_URL: ${STRIPE_SUCCESS_URL:-http://localhost:5173/payment/success}
+
+      STRIPE_CANCEL_URL: ${STRIPE_CANCEL_URL:-http://localhost:5173/payment/cancel}
+      STRIPE_PRICE_PER_HOUR: ${STRIPE_PRICE_PER_HOUR:-1000}
+    ports:
+      - "8086:8086"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+    networks:
+      - courthub-network
+    restart: unless-stopped
+
   # Auth Service
   auth-service:
     build:
@@ -191,13 +218,13 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: kafka:9092
       JWT_SECRET: your-256-bit-secret-key-must-be-at-least-256-bits-long-for-hmac-sha256
       USER_SERVICE_URL: http://user-service:8081
-#      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
-#      MAIL_PORT: ${MAIL_PORT:-587}
-#      MAIL_USERNAME: ${MAIL_USERNAME:-}
-#      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
-#      HIVEMQ_BROKER_URL: ${HIVEMQ_BROKER_URL}
-#      HIVEMQ_USERNAME: ${HIVEMQ_USERNAME:-}
-#      HIVEMQ_PASSWORD: ${HIVEMQ_PASSWORD:-}
+    #      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
+    #      MAIL_PORT: ${MAIL_PORT:-587}
+    #      MAIL_USERNAME: ${MAIL_USERNAME:-}
+    #      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
+    #      HIVEMQ_BROKER_URL: ${HIVEMQ_BROKER_URL}
+    #      HIVEMQ_USERNAME: ${HIVEMQ_USERNAME:-}
+    #      HIVEMQ_PASSWORD: ${HIVEMQ_PASSWORD:-}
     ports:
       - "8085:8085"
     depends_on:
@@ -222,6 +249,7 @@ services:
       USER_SERVICE_URL: http://user-service:8081
       COURT_SERVICE_URL: http://court-service:8082
       BOOKING_SERVICE_URL: http://booking-service:8083
+      PAYMENT_SERVICE_URL: http://payment-service:8086
       NOTIFICATION_SERVICE_URL: http://notification-service:8085
     ports:
       - "9000:9000"
@@ -230,6 +258,7 @@ services:
       - user-service
       - court-service
       - booking-service
+      - payment-service
       - notification-service
     networks:
       - courthub-network
