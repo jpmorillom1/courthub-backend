@@ -2,6 +2,8 @@ package com.courthub.booking.config;
 
 import com.courthub.booking.event.CourtEventPayload;
 import com.courthub.booking.event.CourtScheduleEventPayload;
+
+import com.courthub.common.dto.PaymentEventPayload;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.StringDeserializer;
 import org.springframework.beans.factory.annotation.Value;
@@ -33,6 +35,12 @@ public class KafkaConfig {
         factory.setConsumerFactory(courtScheduleConsumerFactory());
         return factory;
     }
+    @Bean
+    public ConcurrentKafkaListenerContainerFactory<String, PaymentEventPayload> paymentEventKafkaListenerContainerFactory() {
+        ConcurrentKafkaListenerContainerFactory<String, PaymentEventPayload> factory = new ConcurrentKafkaListenerContainerFactory<>();
+        factory.setConsumerFactory(paymentEventConsumerFactory());
+        return factory;
+    }
 
     private DefaultKafkaConsumerFactory<String, CourtEventPayload> courtEventConsumerFactory() {
         JsonDeserializer<CourtEventPayload> deserializer = new JsonDeserializer<>(CourtEventPayload.class);
@@ -53,6 +61,25 @@ public class KafkaConfig {
 
         return new DefaultKafkaConsumerFactory<>(props, new StringDeserializer(), deserializer);
     }
+    private DefaultKafkaConsumerFactory<String, PaymentEventPayload>
+    paymentEventConsumerFactory() {
+
+        JsonDeserializer<PaymentEventPayload> deserializer =
+                new JsonDeserializer<>(PaymentEventPayload.class);
+
+        deserializer.addTrustedPackages("*");
+        deserializer.setRemoveTypeHeaders(true);  
+        deserializer.setUseTypeMapperForKey(false);
+
+        Map<String, Object> props = baseConsumerProps();
+
+        return new DefaultKafkaConsumerFactory<>(
+                props,
+                new StringDeserializer(),
+                deserializer
+        );
+    }
+
 
     private Map<String, Object> baseConsumerProps() {
         Map<String, Object> props = new HashMap<>();

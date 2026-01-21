@@ -60,7 +60,7 @@ public class BookingService {
         booking.setTimeSlotId(timeSlot.getId());
         booking.setCourtId(request.getCourtId());
         booking.setUserId(userId);
-        booking.setStatus(BookingStatus.CONFIRMED);
+        booking.setStatus(BookingStatus.PENDING_PAYMENT);
 
         Booking saved = bookingRepository.save(booking);
 
