@@ -47,7 +47,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.POST, "/courts").hasAuthority("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/courts/*/status").hasAuthority("ADMIN")
                 .requestMatchers(HttpMethod.POST, "/courts/*/schedule").hasAuthority("ADMIN")
-                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html").permitAll()
+                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/actuator/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/courts/**").permitAll()
                 .anyRequest().authenticated()
             )
