@@ -73,9 +73,9 @@ services:
       dockerfile: services/user-service/Dockerfile
     container_name: courthub-user-service
     environment:
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-      JWT_SECRET: your-256-bit-secret-key-must-be-at-least-256-bits-long-for-hmac-sha256
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/courthub_user
     ports:
       - "8081:8081"
@@ -93,11 +93,11 @@ services:
       dockerfile: services/booking-service/Dockerfile
     container_name: courthub-booking-service
     environment:
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-      JWT_SECRET: your-256-bit-secret-key-must-be-at-least-256-bits-long-for-hmac-sha256
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/courthub_booking
-      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS:-kafka:9092}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
       SLOT_DURATION_MINUTES: 60
       SLOT_GENERATION_DAYS_FORWARD: 7
     ports:
@@ -118,17 +118,16 @@ services:
       dockerfile: services/payment-service/Dockerfile
     container_name: courthub-payment-service
     environment:
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-      JWT_SECRET: your-256-bit-secret-key-must-be-at-least-256-bits-long-for-hmac-sha256
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/courthub_payment
-      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      STRIPE_API_KEY: ${STRIPE_API_KEY:-your_stripe_api_key_here}
-      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET:-your_stripe_webhook_secret_here}
-      STRIPE_SUCCESS_URL: ${STRIPE_SUCCESS_URL:-http://localhost:5173/payment/success}
-
-      STRIPE_CANCEL_URL: ${STRIPE_CANCEL_URL:-http://localhost:5173/payment/cancel}
-      STRIPE_PRICE_PER_HOUR: ${STRIPE_PRICE_PER_HOUR:-1000}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      STRIPE_API_KEY: ${STRIPE_API_KEY}
+      STRIPE_WEBHOOK_SECRET: ${STRIPE_WEBHOOK_SECRET}
+      STRIPE_SUCCESS_URL: ${STRIPE_SUCCESS_URL}
+      STRIPE_CANCEL_URL: ${STRIPE_CANCEL_URL}
+      STRIPE_PRICE_PER_HOUR: ${STRIPE_PRICE_PER_HOUR}
     ports:
       - "8086:8086"
     depends_on:
@@ -147,13 +146,13 @@ services:
       dockerfile: services/auth-service/Dockerfile
     container_name: courthub-auth-service
     environment:
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-      JWT_SECRET: your-256-bit-secret-key-must-be-at-least-256-bits-long-for-hmac-sha256
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
       USER_SERVICE_URL: http://user-service:8081
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/courthub_auth
-      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID:-}
-      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET:-}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
     ports:
       - "8080:8080"
     depends_on:
@@ -170,11 +169,11 @@ services:
       dockerfile: services/court-service/Dockerfile
     container_name: courthub-court-service
     environment:
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-      JWT_SECRET: your-256-bit-secret-key-must-be-at-least-256-bits-long-for-hmac-sha256
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
       SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/courthub_court
-      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
     ports:
       - "8082:8082"
     depends_on:
@@ -193,8 +192,8 @@ services:
       dockerfile: services/realtime-adapter-service/Dockerfile
     container_name: courthub-realtime-adapter-service
     environment:
-      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-    #      FIREBASE_DATABASE_URL: ${FIREBASE_DATABASE_URL:-}
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      FIREBASE_DATABASE_URL: ${FIREBASE_DATABASE_URL}
     #      FIREBASE_CREDENTIALS_PATH: ${FIREBASE_CREDENTIALS_PATH:-/app/config/firebase-service-account.json}
     ports:
       - "8084:8084"
@@ -214,17 +213,18 @@ services:
       dockerfile: services/notification-service/Dockerfile
     container_name: courthub-notification-service
     environment:
-      MONGODB_URI: ${MONGODB_URI:-mongodb://mongodb:27017/courthub_notification}
-      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
-      JWT_SECRET: your-256-bit-secret-key-must-be-at-least-256-bits-long-for-hmac-sha256
+      MONGODB_URI: mongodb://mongodb:27017/courthub_notification
+      KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      JWT_SECRET: ${JWT_SECRET}
       USER_SERVICE_URL: http://user-service:8081
-    #      MAIL_HOST: ${MAIL_HOST:-smtp.gmail.com}
-    #      MAIL_PORT: ${MAIL_PORT:-587}
-    #      MAIL_USERNAME: ${MAIL_USERNAME:-}
-    #      MAIL_PASSWORD: ${MAIL_PASSWORD:-}
-    #      HIVEMQ_BROKER_URL: ${HIVEMQ_BROKER_URL}
-    #      HIVEMQ_USERNAME: ${HIVEMQ_USERNAME:-}
-    #      HIVEMQ_PASSWORD: ${HIVEMQ_PASSWORD:-}
+      MAIL_HOST: ${MAIL_HOST}
+      MAIL_PORT: ${MAIL_PORT}
+      MAIL_USERNAME: ${MAIL_USERNAME}
+      MAIL_PASSWORD: ${MAIL_PASSWORD}
+      HIVEMQ_BROKER_URL: ${HIVEMQ_BROKER_URL}
+      HIVEMQ_USERNAME: ${HIVEMQ_USERNAME}
+      HIVEMQ_PASSWORD: ${HIVEMQ_PASSWORD}
+
     ports:
       - "8085:8085"
     depends_on:
@@ -264,9 +264,47 @@ services:
       - courthub-network
     restart: unless-stopped
 
+  # Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: courthub-prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+    ports:
+      - "9090:9090"
+    networks:
+      - courthub-network
+    restart: unless-stopped
+
+  # Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: courthub-grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    volumes:
+      - grafana_data:/var/lib/grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - courthub-network
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   mongodb_data:
+  prometheus_data:
+  grafana_data:
 
 networks:
   courthub-network:
