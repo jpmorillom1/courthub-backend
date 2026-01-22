@@ -37,3 +37,16 @@ spring:
           uri: ${NOTIFICATION_SERVICE_URL}
           predicates:
             - Path=/api/notifications/**
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true

@@ -26,8 +26,8 @@ spring:
 
   # Email Configuration
   mail:
-    host: ${MAIL_HOST:sandbox.smtp.mailtrap.io}
-    port: ${MAIL_PORT:587}
+    host: ${MAIL_HOST}
+    port: ${MAIL_PORT}
     username: ${MAIL_USERNAME}
     password: ${MAIL_PASSWORD}
     properties:
@@ -43,11 +43,11 @@ spring:
 
 # HiveMQ Cloud Configuration
 hivemq:
-  broker-url: ${HIVEMQ_BROKER_URL:tcp://broker.hivemq.com:1883}
-  username: ${HIVEMQ_USERNAME:}
-  password: ${HIVEMQ_PASSWORD:}
+  broker-url: ${HIVEMQ_BROKER_URL}
+  username: ${HIVEMQ_USERNAME}
+  password: ${HIVEMQ_PASSWORD}
   client-id: courthub-notification-service-${random.uuid}
-  topic: ${HIVEMQ_TOPIC:courthub-notifications}
+  topic: ${HIVEMQ_TOPIC:testing}
   qos: ${HIVEMQ_QOS:1}
 
 # JWT Configuration
@@ -65,3 +65,16 @@ logging:
     com.courthub.notification: DEBUG
     org.springframework.kafka: INFO
     org.eclipse.paho: INFO
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true

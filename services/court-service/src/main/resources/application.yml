@@ -39,3 +39,16 @@ kafka:
     court-updated: court.updated
     court-status-changed: court.status.changed
     court-schedule-updated: court.schedule.updated
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true

@@ -48,3 +48,16 @@ kafka:
   topics:
     booking-created: booking.created
     booking-cancelled: booking.cancelled
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
