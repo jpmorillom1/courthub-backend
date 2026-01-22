@@ -1,7 +1,7 @@
-package com.courthub.booking.domain;
-
-public enum TimeSlotStatus {
-    AVAILABLE,
-    BOOKED,
-    BLOCKED
-}
+//package com.courthub.booking.domain;
+//
+//public enum TimeSlotStatus {
+//    AVAILABLE,
+//    BOOKED,
+//    BLOCKED
+//}

@@ -1,7 +1,7 @@
 package com.courthub.booking.repository;
 
 import com.courthub.booking.domain.TimeSlot;
-import com.courthub.booking.domain.TimeSlotStatus;
+import com.courthub.common.dto.enums.TimeSlotStatus;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;

@@ -1,10 +1,8 @@
 package com.courthub.booking.event;
 
 import com.courthub.booking.domain.CourtSnapshot;
-import com.courthub.booking.domain.CourtStatus;
 import com.courthub.booking.repository.CourtSnapshotRepository;
 import com.courthub.booking.repository.TimeSlotRepository;
-import com.courthub.booking.domain.TimeSlotStatus;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;

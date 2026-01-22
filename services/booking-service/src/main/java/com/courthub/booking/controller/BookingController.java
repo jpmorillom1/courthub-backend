@@ -1,7 +1,7 @@
 package com.courthub.booking.controller;
 
 import com.courthub.booking.config.JwtAuthenticationToken;
-import com.courthub.booking.dto.AvailabilitySlotResponse;
+import com.courthub.common.dto.AvailabilitySlotResponse;
 import com.courthub.booking.dto.BookingResponse;
 import com.courthub.booking.dto.CreateBookingRequest;
 import com.courthub.booking.service.BookingService;

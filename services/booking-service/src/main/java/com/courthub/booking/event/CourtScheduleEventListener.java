@@ -2,7 +2,7 @@ package com.courthub.booking.event;
 
 import com.courthub.booking.repository.TimeSlotRepository;
 import com.courthub.booking.domain.TimeSlot;
-import com.courthub.booking.domain.TimeSlotStatus;
+import com.courthub.common.dto.enums.TimeSlotStatus;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;

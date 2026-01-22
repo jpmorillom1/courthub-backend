@@ -1,5 +1,6 @@
 package com.courthub.booking.domain;
 
+import com.courthub.common.dto.enums.TimeSlotStatus;
 import jakarta.persistence.*;
 
 import java.time.Instant;
