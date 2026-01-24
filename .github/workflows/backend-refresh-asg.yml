@@ -70,6 +70,8 @@ jobs:
 
       - name: Refresh ASG Instances
         run: |
+          aws autoscaling cancel-instance-refresh --auto-scaling-group-name courthub-app-asg || true
+          
           aws autoscaling start-instance-refresh \
             --auto-scaling-group-name courthub-app-asg \
             --preferences '{"MinHealthyPercentage": 50}'
@@ -84,7 +86,7 @@ jobs:
             docker pull ${{ secrets.DOCKERHUB_USERNAME }}/courthub-backend-api-gateway:latest
             docker stop api-gateway || true
             docker rm api-gateway || true
-            # Comando docker run (asegúrate de que INTERNAL_ALB_DNS esté en tus secretos)
+            
             docker run -d --name api-gateway -p 9000:9000 \
               -e AUTH_SERVICE_URL=http://${{ secrets.INTERNAL_ALB_DNS }}:8080 \
               -e USER_SERVICE_URL=http://${{ secrets.INTERNAL_ALB_DNS }}:8081 \
