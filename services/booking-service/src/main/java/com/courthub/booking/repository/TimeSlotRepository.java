@@ -33,4 +33,9 @@ public interface TimeSlotRepository extends JpaRepository<TimeSlot, UUID> {
     void deleteByCourtIdAndDateAndStatus(UUID courtId, LocalDate date, TimeSlotStatus status);
 
     List<TimeSlot> findByDate(LocalDate date);
+
+    @Modifying
+    @Query("delete from TimeSlot ts where ts.date < :currentDate and ts.status = :status " +
+           "and not exists (select 1 from Booking b where b.timeSlotId = ts.id)")
+    void deleteOldUnusedSlots(LocalDate currentDate, TimeSlotStatus status);
 }

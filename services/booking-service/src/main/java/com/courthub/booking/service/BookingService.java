@@ -13,6 +13,9 @@ import com.courthub.booking.repository.BookingRepository;
 import com.courthub.booking.repository.TimeSlotRepository;
 import com.courthub.common.exception.BusinessException;
 import com.courthub.common.exception.NotFoundException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +26,8 @@ import java.util.stream.Collectors;
 
 @Service
 public class BookingService {
+
+    private static final Logger log = LoggerFactory.getLogger(BookingService.class);
 
     private final BookingRepository bookingRepository;
     private final TimeSlotRepository timeSlotRepository;
@@ -153,5 +158,21 @@ public class BookingService {
                 slot.getEndTime(),
                 slot.getStatus()
         );
+    }
+
+    /**
+     * Cron Job 2AM for delete old TimeSlots .
+     */
+    @Scheduled(cron = "0 0 2 * * *")
+    @Transactional
+    public void cleanupOldTimeSlots() {
+        log.info("Starting cleanup of old time slots at {}", LocalDate.now());
+        try {
+            timeSlotRepository.deleteOldUnusedSlots(LocalDate.now(), TimeSlotStatus.AVAILABLE);
+            log.info("Successfully completed cleanup of old time slots");
+        } catch (Exception e) {
+            log.error("Error during time slot cleanup", e);
+            throw e;
+        }
     }
 }
