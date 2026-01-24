@@ -2,8 +2,8 @@ name: "Backend CD - Refresh ASG & Gateway"
 
 on:
   push:
-    branches: [ "develop" ]
-    paths: [ "services/**", "libs/**", "build.gradle" ]
+    branches: ["develop"]
+    paths: ["services/**", "libs/**", "build.gradle"]
 
 jobs:
   test-and-build:
@@ -11,7 +11,17 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        service: [auth-service, user-service, court-service, booking-service, payment-service, notification-service, realtime-adapter-service, api-gateway]
+        service:
+          [
+            auth-service,
+            user-service,
+            court-service,
+            booking-service,
+            payment-service,
+            notification-service,
+            realtime-adapter-service,
+            api-gateway,
+          ]
 
     steps:
       - name: Checkout code
@@ -20,14 +30,16 @@ jobs:
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '17'
-          distribution: 'temurin'
-          cache: 'gradle'
+          java-version: "17"
+          distribution: "temurin"
+          cache: "gradle"
 
       # Ejecutar pruebas unitarias para los servicios solicitados
       - name: Run Unit Tests
         if: contains(fromJSON('["user-service", "booking-service", "court-service", "notification-service"]'), matrix.service)
-        run: ./gradlew :services:${{ matrix.service }}:test
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :services:${{ matrix.service }}:test
 
       - name: Build with Gradle
         run: ./gradlew :services:${{ matrix.service }}:build -x test
