@@ -59,7 +59,7 @@ public class UserController {
         return ResponseEntity.ok(user);
     }
 
-    //endpoint for client getting info with jwt
+ 
     @GetMapping("/me")
     @Operation(summary = "Get current authenticated user", description = "Returns the information of the currently authenticated user")
     @ApiResponses(value = {
