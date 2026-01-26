@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -50,6 +51,7 @@ public class PaymentService {
                 .setMode(SessionCreateParams.Mode.PAYMENT)
                 .setSuccessUrl(successUrl + "?session_id={CHECKOUT_SESSION_ID}")
                 .setCancelUrl(cancelUrl)
+                .setExpiresAt(Instant.now().getEpochSecond() + 1800)
                 .addLineItem(
                         SessionCreateParams.LineItem.builder()
                                 .setPriceData(
@@ -120,6 +122,17 @@ public class PaymentService {
             logger.warn("Payment failed for booking: {}", payment.getBookingId());
             
             paymentEventProducer.sendPaymentFailed(payment);
+        });
+    }
+
+    @Transactional
+    public void handleExpiredPayment(String sessionId) {
+        paymentRepository.findByStripeSessionId(sessionId).ifPresent(payment -> {
+            payment.setStatus(PaymentStatus.EXPIRED);
+            paymentRepository.save(payment);
+            logger.warn("Payment expired for booking: {}", payment.getBookingId());
+            
+            paymentEventProducer.sendPaymentExpired(payment);
         });
     }
 

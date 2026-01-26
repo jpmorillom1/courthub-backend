@@ -84,11 +84,20 @@ public class WebhookController {
 
 
     private void handleCheckoutSessionExpired(Event event) {
-        Session session = (Session) event.getDataObjectDeserializer()
-                .getObject()
-                .orElseThrow(() -> new IllegalStateException("Session not found in event"));
+        EventDataObjectDeserializer dataObjectDeserializer = event.getDataObjectDeserializer();
 
-        paymentService.handleFailedPayment(session.getId());
-        logger.info("Successfully processed checkout.session.expired for session: {}", session.getId());
+        Session session = (Session) dataObjectDeserializer.getObject()
+                .orElseGet(() -> {
+                    try {
+                        return (Session) dataObjectDeserializer.deserializeUnsafe();
+                    } catch (EventDataObjectDeserializationException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+
+        if (session != null) {
+            paymentService.handleExpiredPayment(session.getId());
+            logger.info("Successfully processed checkout.session.expired for session: {}", session.getId());
+        }
     }
 }
