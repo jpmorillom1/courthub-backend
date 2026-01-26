@@ -136,6 +136,29 @@ public class BookingService {
         return toBookingResponse(saved, timeSlot);
     }
 
+    @Transactional
+    public void handleExpiredPayment(UUID bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new NotFoundException("Booking", bookingId));
+
+        if (booking.getStatus() == BookingStatus.PENDING_PAYMENT) {
+            booking.setStatus(BookingStatus.CANCELLED);
+            bookingRepository.save(booking);
+            
+            TimeSlot timeSlot = timeSlotRepository.findById(booking.getTimeSlotId())
+                    .orElseThrow(() -> new NotFoundException("TimeSlot", booking.getTimeSlotId()));
+            
+            timeSlot.setStatus(TimeSlotStatus.AVAILABLE);
+            timeSlotRepository.save(timeSlot);
+            
+            log.info("Booking {} cancelled and TimeSlot {} released due to payment expiration",
+                    bookingId, timeSlot.getId());
+        } else {
+            log.warn("Booking {} is not in PENDING_PAYMENT status. Current status: {}",
+                    bookingId, booking.getStatus());
+        }
+    }
+
     private BookingResponse toBookingResponse(Booking booking, TimeSlot timeSlot) {
         return new BookingResponse(
                 booking.getId(),
