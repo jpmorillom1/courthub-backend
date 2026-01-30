@@ -49,6 +49,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/bookings/user/{userId}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/bookings/{id}").permitAll()
                 .requestMatchers(HttpMethod.GET, "/bookings/internal/slots-sync").permitAll()
+                .requestMatchers(HttpMethod.GET, "/bookings/internal/bookings/all").permitAll()
                 .requestMatchers(HttpMethod.POST, "/bookings").authenticated()
                 .requestMatchers(HttpMethod.PATCH, "/bookings/*/cancel").authenticated()
 

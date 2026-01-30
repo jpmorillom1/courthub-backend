@@ -198,4 +198,24 @@ public class BookingService {
             throw e;
         }
     }
+
+    public List<com.courthub.common.dto.analytics.BookingInternalDTO> getAllBookingsForAnalytics() {
+        return bookingRepository.findAll().stream()
+            .map(this::toBookingInternalDTO)
+            .collect(Collectors.toList());
+    }
+
+    private com.courthub.common.dto.analytics.BookingInternalDTO toBookingInternalDTO(Booking booking) {
+        TimeSlot timeSlot = timeSlotRepository.findById(booking.getTimeSlotId())
+            .orElseThrow(() -> new NotFoundException("TimeSlot", booking.getTimeSlotId().toString()));
+        
+        return new com.courthub.common.dto.analytics.BookingInternalDTO(
+            booking.getId().toString(),
+            booking.getCourtId().toString(),
+            timeSlot.getDate(),
+            timeSlot.getStartTime(),
+            booking.getStatus().toString(),
+            booking.getUserId().toString()
+        );
+    }
 }

@@ -70,6 +70,16 @@ public class BookingController {
         return ResponseEntity.ok(slots);
     }
 
+    @GetMapping("/internal/bookings/all")
+    @Operation(summary = "Get all bookings (internal)", description = "Retrieve all bookings for analytics purposes - Internal endpoint")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "All bookings returned")
+    })
+    public ResponseEntity<List<com.courthub.common.dto.analytics.BookingInternalDTO>> getAllBookings() {
+        List<com.courthub.common.dto.analytics.BookingInternalDTO> bookings = bookingService.getAllBookingsForAnalytics();
+        return ResponseEntity.ok(bookings);
+    }
+
     @GetMapping("/user/{userId}")
     @Operation(summary = "Get user bookings", description = "Retrieves all bookings for a specific user")
     @ApiResponses(value = {
