@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: payment-service
+    name: PAYMENT-SERVICE
 
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/courthub_payment}
@@ -64,3 +64,8 @@ management:
     export:
       prometheus:
         enabled: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

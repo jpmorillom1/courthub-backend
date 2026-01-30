@@ -3,7 +3,7 @@ server:
 
 spring:
   application:
-    name: notification-service
+    name: NOTIFICATION-SERVICE
 
   # MongoDB Configuration
   data:
@@ -78,3 +78,8 @@ management:
     export:
       prometheus:
         enabled: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
