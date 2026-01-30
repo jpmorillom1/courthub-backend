@@ -13,6 +13,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
@@ -115,5 +117,25 @@ public class CourtIssueService {
                 issue.getCreatedAt(),
                 issue.getUpdatedAt()
         );
+    }
+
+    public List<com.courthub.common.dto.analytics.CourtIssueInternalDTO> getAllCourtIssuesForAnalytics() {
+        return issueRepository.findAll().stream()
+            .map(issue -> new com.courthub.common.dto.analytics.CourtIssueInternalDTO(
+                issue.getId().toString(),
+                issue.getCourtId().toString(),
+                issue.getSeverity().toString(),
+                issue.getStatus().toString(),
+                toLocalDateTime(issue.getCreatedAt()),
+                toLocalDateTime(issue.getUpdatedAt())
+            ))
+            .collect(Collectors.toList());
+    }
+
+    private LocalDateTime toLocalDateTime(Instant instant) {
+        if (instant == null) {
+            return null;
+        }
+        return LocalDateTime.ofInstant(instant, ZoneOffset.UTC);
     }
 }

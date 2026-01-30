@@ -51,6 +51,7 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.GET, "/courts/issues/severity-levels").permitAll()
                 .requestMatchers(HttpMethod.GET, "/courts/issues").hasAuthority("ADMIN")
                 .requestMatchers(HttpMethod.PATCH, "/courts/issues/*/status").hasAuthority("ADMIN")
+                .requestMatchers(HttpMethod.GET, "/courts/internal/**").permitAll()
                 .requestMatchers("/swagger-ui/**", "/v3/api-docs/**", "/swagger-ui.html", "/actuator/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/courts/**").permitAll()
                 .anyRequest().authenticated()

@@ -31,13 +31,16 @@ public class CourtService {
     private final CourtRepository courtRepository;
     private final CourtScheduleRepository scheduleRepository;
     private final CourtEventProducer eventProducer;
+    private final CourtIssueService courtIssueService;
 
     public CourtService(CourtRepository courtRepository,
                         CourtScheduleRepository scheduleRepository,
-                        CourtEventProducer eventProducer) {
+                        CourtEventProducer eventProducer,
+                        CourtIssueService courtIssueService) {
         this.courtRepository = courtRepository;
         this.scheduleRepository = scheduleRepository;
         this.eventProducer = eventProducer;
+        this.courtIssueService = courtIssueService;
     }
 
     @Transactional
@@ -165,5 +168,9 @@ public class CourtService {
                 schedule.getOpenTime(),
                 schedule.getCloseTime()
         );
+    }
+
+    public List<com.courthub.common.dto.analytics.CourtIssueInternalDTO> getAllCourtIssuesForAnalytics() {
+        return courtIssueService.getAllCourtIssuesForAnalytics();
     }
 }

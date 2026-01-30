@@ -111,4 +111,14 @@ public class CourtController {
         CourtScheduleResponseDto schedule = courtService.upsertSchedule(courtId, request);
         return ResponseEntity.ok(schedule);
     }
+
+    @GetMapping("/internal/courts/issues/all")
+    @Operation(summary = "Get all court issues (internal)", description = "Retrieve all court issues for analytics purposes - Internal endpoint")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "All court issues returned")
+    })
+    public ResponseEntity<List<com.courthub.common.dto.analytics.CourtIssueInternalDTO>> getAllCourtIssues() {
+        List<com.courthub.common.dto.analytics.CourtIssueInternalDTO> issues = courtService.getAllCourtIssuesForAnalytics();
+        return ResponseEntity.ok(issues);
+    }
 }
