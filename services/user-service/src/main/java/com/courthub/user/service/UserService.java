@@ -137,4 +137,14 @@ public class UserService {
                 roleStrings
         );
     }
+
+    public java.util.List<com.courthub.common.dto.analytics.UserInternalDTO> getAllUsersForAnalytics() {
+        return userRepository.findAll().stream()
+            .map(user -> new com.courthub.common.dto.analytics.UserInternalDTO(
+                user.getId().toString(),
+                user.getName(),
+                user.getFaculty()
+            ))
+            .collect(Collectors.toList());
+    }
 }

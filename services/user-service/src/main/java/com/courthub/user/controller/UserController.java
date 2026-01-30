@@ -121,4 +121,14 @@ public class UserController {
         response.put("valid", isValid);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping("/internal/users/all")
+    @Operation(summary = "Get all users (internal)", description = "Retrieve all users for analytics purposes - Internal endpoint")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "All users returned")
+    })
+    public ResponseEntity<java.util.List<com.courthub.common.dto.analytics.UserInternalDTO>> getAllUsers() {
+        java.util.List<com.courthub.common.dto.analytics.UserInternalDTO> users = userService.getAllUsersForAnalytics();
+        return ResponseEntity.ok(users);
+    }
 }
