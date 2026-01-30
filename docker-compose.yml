@@ -300,6 +300,32 @@ services:
       - courthub-network
     restart: unless-stopped
 
+  # Analytics Service
+  analytics-service:
+    build:
+      context: .
+      dockerfile: services/analytics-service/Dockerfile
+    container_name: courthub-analytics-service
+    environment:
+      MONGODB_URI: ${MONGODB_URI}
+      BOOKING_SERVICE_URL: ${BOOKING_SERVICE_URL}
+      COURT_SERVICE_URL: ${COURT_SERVICE_URL}
+      USER_SERVICE_URL: ${USER_SERVICE_URL}
+    ports:
+      - "8087:8087"
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      booking-service:
+        condition: service_started
+      court-service:
+        condition: service_started
+      user-service:
+        condition: service_started
+    networks:
+      - courthub-network
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   mongodb_data:
