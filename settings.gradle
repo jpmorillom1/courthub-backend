@@ -14,6 +14,7 @@ include(
     "libs:common:common-web",
     "services:auth-service",
     "services:api-gateway",
+    "services:eureka-server",
     "services:user-service",
     "services:court-service",
     "services:booking-service",

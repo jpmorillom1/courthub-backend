@@ -66,6 +66,18 @@ services:
     networks:
       - courthub-network
 
+  # Eureka Server
+  eureka-server:
+    build:
+      context: .
+      dockerfile: services/eureka-server/Dockerfile
+    container_name: courthub-eureka-server
+    ports:
+      - "8761:8761"
+    networks:
+      - courthub-network
+    restart: unless-stopped
+
   # User Service
   user-service:
     build:
@@ -77,11 +89,14 @@ services:
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
       SPRING_DATASOURCE_URL: ${USER_DB_URL}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     ports:
       - "8081:8081"
     depends_on:
       postgres:
         condition: service_healthy
+      eureka-server:
+        condition: service_started
     networks:
       - courthub-network
     restart: unless-stopped
@@ -100,12 +115,15 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
       SLOT_DURATION_MINUTES: ${SLOT_DURATION_MINUTES}
       SLOT_GENERATION_DAYS_FORWARD: ${SLOT_GENERATION_DAYS_FORWARD}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     ports:
       - "8083:8083"
     depends_on:
       postgres:
         condition: service_healthy
       kafka:
+        condition: service_started
+      eureka-server:
         condition: service_started
     networks:
       - courthub-network
@@ -128,12 +146,15 @@ services:
       STRIPE_SUCCESS_URL: ${STRIPE_SUCCESS_URL}
       STRIPE_CANCEL_URL: ${STRIPE_CANCEL_URL}
       STRIPE_PRICE_PER_HOUR: ${STRIPE_PRICE_PER_HOUR}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     ports:
       - "8086:8086"
     depends_on:
       postgres:
         condition: service_healthy
       kafka:
+        condition: service_started
+      eureka-server:
         condition: service_started
     networks:
       - courthub-network
@@ -153,11 +174,13 @@ services:
       SPRING_DATASOURCE_URL: ${AUTH_DB_URL}
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     ports:
       - "8080:8080"
     depends_on:
       - postgres
       - user-service
+      - eureka-server
     networks:
       - courthub-network
     restart: unless-stopped
@@ -174,12 +197,15 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       SPRING_DATASOURCE_URL: ${COURT_DB_URL}
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     ports:
       - "8082:8082"
     depends_on:
       postgres:
         condition: service_healthy
       kafka:
+        condition: service_started
+      eureka-server:
         condition: service_started
     networks:
       - courthub-network
@@ -194,11 +220,14 @@ services:
     environment:
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
       FIREBASE_DATABASE_URL: ${FIREBASE_DATABASE_URL}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     #      FIREBASE_CREDENTIALS_PATH: ${FIREBASE_CREDENTIALS_PATH:-/app/config/firebase-service-account.json}
     ports:
       - "8084:8084"
     depends_on:
       kafka:
+        condition: service_started
+      eureka-server:
         condition: service_started
     networks:
       - courthub-network
@@ -224,6 +253,7 @@ services:
       HIVEMQ_BROKER_URL: ${HIVEMQ_BROKER_URL}
       HIVEMQ_USERNAME: ${HIVEMQ_USERNAME}
       HIVEMQ_PASSWORD: ${HIVEMQ_PASSWORD}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
 
     ports:
       - "8085:8085"
@@ -233,6 +263,8 @@ services:
       kafka:
         condition: service_started
       user-service:
+        condition: service_started
+      eureka-server:
         condition: service_started
     networks:
       - courthub-network
@@ -251,6 +283,7 @@ services:
       BOOKING_SERVICE_URL: ${BOOKING_SERVICE_URL}
       PAYMENT_SERVICE_URL: ${PAYMENT_SERVICE_URL}
       NOTIFICATION_SERVICE_URL: ${NOTIFICATION_SERVICE_URL}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     ports:
       - "9000:9000"
     depends_on:
@@ -260,6 +293,7 @@ services:
       - booking-service
       - payment-service
       - notification-service
+      - eureka-server
     networks:
       - courthub-network
     restart: unless-stopped
@@ -311,6 +345,7 @@ services:
       BOOKING_SERVICE_URL: ${BOOKING_SERVICE_URL}
       COURT_SERVICE_URL: ${COURT_SERVICE_URL}
       USER_SERVICE_URL: ${USER_SERVICE_URL}
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     ports:
       - "8087:8087"
     depends_on:
@@ -321,6 +356,8 @@ services:
       court-service:
         condition: service_started
       user-service:
+        condition: service_started
+      eureka-server:
         condition: service_started
     networks:
       - courthub-network
