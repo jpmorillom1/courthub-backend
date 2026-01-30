@@ -1,6 +1,6 @@
 spring:
   application:
-    name: booking-service
+    name: BOOKING-SERVICE
 
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/courthub_booking}
@@ -61,3 +61,8 @@ management:
     export:
       prometheus:
         enabled: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/

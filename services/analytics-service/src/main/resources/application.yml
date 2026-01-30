@@ -1,6 +1,6 @@
 spring:
   application:
-    name: analytics-service
+    name: ANALYTICS-SERVICE
   data:
     mongodb:
       uri: ${MONGODB_URI:mongodb://localhost:27017/courthub_analytics}
@@ -37,3 +37,8 @@ logging:
   level:
     root: INFO
     com.courthub: DEBUG
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
