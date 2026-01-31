@@ -45,6 +45,9 @@ public class Court {
     @Column(nullable = false, name = "created_at")
     private Instant createdAt;
 
+    @Column(name = "video_url")
+    private String videoUrl;
+
     @PrePersist
     public void prePersist() {
         if (status == null) {
@@ -117,5 +120,13 @@ public class Court {
 
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
+    }
+
+    public String getVideoUrl() {
+        return videoUrl;
+    }
+
+    public void setVideoUrl(String videoUrl) {
+        this.videoUrl = videoUrl;
     }
 }

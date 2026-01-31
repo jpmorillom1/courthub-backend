@@ -53,6 +53,7 @@ public class CourtService {
         court.setSportType(request.getSportType());
         court.setSurfaceType(request.getSurfaceType());
         court.setCapacity(request.getCapacity());
+        court.setVideoUrl(request.getVideoUrl());
         court.setStatus(CourtStatus.ACTIVE);
 
         Court savedCourt = courtRepository.save(court);
@@ -156,6 +157,7 @@ public class CourtService {
                 court.getCapacity(),
                 court.getStatus(),
                 court.getCreatedAt(),
+                court.getVideoUrl(),
                 scheduleDtos
         );
     }

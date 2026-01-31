@@ -23,6 +23,8 @@ public class CourtRequestDto {
     @Min(1)
     private int capacity;
 
+    private String videoUrl;
+
     public String getName() {
         return name;
     }
@@ -61,5 +63,13 @@ public class CourtRequestDto {
 
     public void setCapacity(int capacity) {
         this.capacity = capacity;
+    }
+
+    public String getVideoUrl() {
+        return videoUrl;
+    }
+
+    public void setVideoUrl(String videoUrl) {
+        this.videoUrl = videoUrl;
     }
 }

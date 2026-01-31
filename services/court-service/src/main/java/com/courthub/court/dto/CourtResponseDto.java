@@ -18,13 +18,14 @@ public class CourtResponseDto {
     private int capacity;
     private CourtStatus status;
     private Instant createdAt;
+    private String videoUrl;
     private List<CourtScheduleResponseDto> schedules;
 
     public CourtResponseDto() {
     }
 
     public CourtResponseDto(UUID id, String name, String location, SportType sportType, SurfaceType surfaceType,
-                            int capacity, CourtStatus status, Instant createdAt, List<CourtScheduleResponseDto> schedules) {
+                            int capacity, CourtStatus status, Instant createdAt, String videoUrl, List<CourtScheduleResponseDto> schedules) {
         this.id = id;
         this.name = name;
         this.location = location;
@@ -33,6 +34,7 @@ public class CourtResponseDto {
         this.capacity = capacity;
         this.status = status;
         this.createdAt = createdAt;
+        this.videoUrl = videoUrl;
         this.schedules = schedules;
     }
 
@@ -106,5 +108,13 @@ public class CourtResponseDto {
 
     public void setSchedules(List<CourtScheduleResponseDto> schedules) {
         this.schedules = schedules;
+    }
+
+    public String getVideoUrl() {
+        return videoUrl;
+    }
+
+    public void setVideoUrl(String videoUrl) {
+        this.videoUrl = videoUrl;
     }
 }
