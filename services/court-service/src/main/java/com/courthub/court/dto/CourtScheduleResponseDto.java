@@ -1,9 +1,12 @@
 package com.courthub.court.dto;
 
+import java.io.Serializable;
 import java.time.LocalTime;
 import java.util.UUID;
 
-public class CourtScheduleResponseDto {
+public class CourtScheduleResponseDto implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private UUID id;
     private UUID courtId;

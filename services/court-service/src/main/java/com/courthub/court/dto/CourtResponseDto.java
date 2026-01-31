@@ -4,11 +4,14 @@ import com.courthub.court.domain.CourtStatus;
 import com.courthub.court.domain.SportType;
 import com.courthub.court.domain.SurfaceType;
 
+import java.io.Serializable;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
 
-public class CourtResponseDto {
+public class CourtResponseDto implements Serializable {
+
+    private static final long serialVersionUID = 1L;
 
     private UUID id;
     private String name;

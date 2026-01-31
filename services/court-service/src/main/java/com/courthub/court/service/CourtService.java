@@ -15,6 +15,8 @@ import com.courthub.court.dto.CourtStatusUpdateDto;
 import com.courthub.court.event.CourtEventProducer;
 import com.courthub.court.repository.CourtRepository;
 import com.courthub.court.repository.CourtScheduleRepository;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -44,6 +46,7 @@ public class CourtService {
     }
 
     @Transactional
+    @CacheEvict(value = "courts", allEntries = true)
     public CourtResponseDto createCourt(CourtRequestDto request) {
         validateCapacity(request.getCapacity());
 
@@ -62,6 +65,7 @@ public class CourtService {
         return toCourtResponse(savedCourt, Collections.emptyList());
     }
 
+    @Cacheable(value = "courts", key = "T(String).format('list-%s-%s-%s', #sportType, #surfaceType, #status)")
     public List<CourtResponseDto> listCourts(SportType sportType, SurfaceType surfaceType, CourtStatus status) {
         List<Court> courts = courtRepository.findByFilters(sportType, surfaceType, status);
         if (courts.isEmpty()) {
@@ -80,6 +84,7 @@ public class CourtService {
                 .collect(Collectors.toList());
     }
 
+    @Cacheable(value = "courts", key = "#id")
     public CourtResponseDto getCourt(UUID id) {
         Court court = findCourtOrThrow(id);
         List<CourtSchedule> schedules = scheduleRepository.findByCourtId(id);
@@ -87,6 +92,7 @@ public class CourtService {
     }
 
     @Transactional
+    @CacheEvict(value = "courts", allEntries = true)
     public CourtResponseDto updateStatus(UUID id, CourtStatusUpdateDto request) {
         if (request.getStatus() == null) {
             throw new BusinessException("Status is required");
@@ -104,6 +110,7 @@ public class CourtService {
     }
 
     @Transactional
+    @CacheEvict(value = "courts", allEntries = true)
     public CourtScheduleResponseDto upsertSchedule(UUID courtId, CourtScheduleRequestDto request) {
         Court court = findCourtOrThrow(courtId);
         validateScheduleTimes(request.getOpenTime(), request.getCloseTime());
