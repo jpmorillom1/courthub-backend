@@ -48,6 +48,21 @@ services:
     networks:
       - courthub-network
 
+  # Redis Cache
+  redis:
+    image: redis:alpine
+    container_name: courthub-redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - courthub-network
+    restart: unless-stopped
+
   # MongoDB Database
   mongodb:
     image: mongo:7-jammy
@@ -197,6 +212,8 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       SPRING_DATASOURCE_URL: ${COURT_DB_URL}
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
+      REDIS_HOST: ${REDIS_HOST:-redis}
+      REDIS_PORT: ${REDIS_PORT:-6379}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     ports:
       - "8082:8082"
@@ -205,6 +222,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_started
+      redis:
+        condition: service_healthy
       eureka-server:
         condition: service_started
     networks:
