@@ -36,9 +36,6 @@ jwt:
   access-token-expiration-minutes: 15
   refresh-token-expiration-days: 30
 
-user-service:
-  url: ${USER_SERVICE_URL:http://localhost:8081}
-
 management:
   endpoints:
     web:

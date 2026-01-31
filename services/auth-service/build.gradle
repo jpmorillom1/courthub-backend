@@ -13,8 +13,7 @@ dependencies {
     
     // Database
     runtimeOnly 'org.postgresql:postgresql'
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
+    
     // Common modules
     implementation project(':libs:common:common-dto')
     implementation project(':libs:common:common-exception')

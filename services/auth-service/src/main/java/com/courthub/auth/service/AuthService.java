@@ -1,14 +1,17 @@
 package com.courthub.auth.service;
 
+import com.courthub.auth.client.UserServiceFeignClient;
 import com.courthub.auth.entity.RefreshToken;
 import com.courthub.auth.repository.RefreshTokenRepository;
 import com.courthub.common.dto.AuthRequestDto;
 import com.courthub.common.dto.AuthResponseDto;
 import com.courthub.common.dto.CreateUserDto;
 import com.courthub.common.dto.UserDto;
+import com.courthub.common.dto.ValidateCredentialsDto;
 import com.courthub.common.exception.NotFoundException;
 import com.courthub.common.exception.UnauthorizedException;
 import com.courthub.common.security.JwtTokenProvider;
+import feign.FeignException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -17,36 +20,41 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 @Service
 public class AuthService {
 
-    private final UserServiceClient userServiceClient;
+    private final UserServiceFeignClient userServiceFeignClient;
     private final JwtTokenProvider jwtTokenProvider;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenRepository refreshTokenRepository;
 
     @Autowired
     public AuthService(
-            UserServiceClient userServiceClient,
+            UserServiceFeignClient userServiceFeignClient,
             JwtTokenProvider jwtTokenProvider,
             PasswordEncoder passwordEncoder,
             RefreshTokenRepository refreshTokenRepository) {
-        this.userServiceClient = userServiceClient;
+        this.userServiceFeignClient = userServiceFeignClient;
         this.jwtTokenProvider = jwtTokenProvider;
         this.passwordEncoder = passwordEncoder;
         this.refreshTokenRepository = refreshTokenRepository;
     }
 
     public AuthResponseDto login(AuthRequestDto request) {
-        boolean isValid = userServiceClient.validateCredentials(request.getEmail(), request.getPassword());
+        Map<String, Object> validationResult = userServiceFeignClient.validateCredentials(
+            new ValidateCredentialsDto(request.getEmail(), request.getPassword())
+        );
+        
+        boolean isValid = validationResult != null && Boolean.TRUE.equals(validationResult.get("valid"));
         
         if (!isValid) {
             throw new UnauthorizedException("Invalid email or password");
         }
 
-        UserDto user = userServiceClient.getUserByEmail(request.getEmail());
+        UserDto user = getUserByEmailSafely(request.getEmail());
         
         if (user == null) {
             throw new UnauthorizedException("User not found");
@@ -77,7 +85,7 @@ public class AuthService {
             throw new UnauthorizedException("Refresh token expired");
         }
 
-        UserDto user = userServiceClient.getUserById(userId);
+        UserDto user = getUserByIdSafely(userId);
         if (user == null) {
             throw new NotFoundException("User", userId);
         }
@@ -104,7 +112,7 @@ public class AuthService {
         UserDto user = null;
 
         try {
-            user = userServiceClient.getUserByEmail(email);
+            user = getUserByEmailSafely(email);
         } catch (Exception e) {
             System.out.println("El usuario no existe, se procederá a crearlo: " + email);
         }
@@ -117,7 +125,7 @@ public class AuthService {
                     null,
                     java.util.Set.of("USER")
             );
-            user = userServiceClient.createUser(createUserDto);
+            user = userServiceFeignClient.createUser(createUserDto);
         }
 
         List<String> roles = user.getRoles() != null ? user.getRoles().stream().toList() : List.of("USER");
@@ -128,6 +136,23 @@ public class AuthService {
 
         return new AuthResponseDto(accessToken, refreshToken);
     }
+    
+    private UserDto getUserByEmailSafely(String email) {
+        try {
+            return userServiceFeignClient.getUserByEmail(email);
+        } catch (FeignException.NotFound e) {
+            return null;
+        }
+    }
+    
+    private UserDto getUserByIdSafely(UUID userId) {
+        try {
+            return userServiceFeignClient.getUserById(userId);
+        } catch (FeignException.NotFound e) {
+            return null;
+        }
+    }
+    
     private void saveRefreshToken(UUID userId, String token) {
         LocalDateTime expiresAt = LocalDateTime.now().plusDays(30);
 
