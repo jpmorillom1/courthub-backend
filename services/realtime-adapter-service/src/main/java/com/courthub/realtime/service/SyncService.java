@@ -1,13 +1,15 @@
 package com.courthub.realtime.service;
 
-import com.courthub.realtime.client.BookingServiceClient;
+import com.courthub.realtime.client.BookingServiceFeignClient;
 import com.courthub.realtime.dto.AvailabilitySlotResponse;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -15,7 +17,7 @@ import java.util.List;
 @Slf4j
 public class SyncService {
 
-    private final BookingServiceClient bookingServiceClient;
+    private final BookingServiceFeignClient bookingServiceFeignClient;
     private final FirebaseService firebaseService;
 
     /**
@@ -50,7 +52,7 @@ public class SyncService {
             log.debug("Reconciling slots for date: {}", date);
             
             // Fetch all slots for the date from booking service
-            List<AvailabilitySlotResponse> slots = bookingServiceClient.getSlotsByDate(date);
+            List<AvailabilitySlotResponse> slots = getSlotsByDateSafely(date);
             
             if (slots == null || slots.isEmpty()) {
                 log.debug("No slots found for date: {}", date);
@@ -77,6 +79,20 @@ public class SyncService {
         } catch (Exception e) {
             log.error("Failed to reconcile slots for date {}: {}", date, e.getMessage());
             // Continue with next date despite error
+        }
+    }
+
+    private List<AvailabilitySlotResponse> getSlotsByDateSafely(LocalDate date) {
+        try {
+            List<AvailabilitySlotResponse> slots = bookingServiceFeignClient.getSlotsByDate(date);
+            log.info("Successfully retrieved {} slots for date {}", slots != null ? slots.size() : 0, date);
+            return slots != null ? slots : Collections.emptyList();
+        } catch (FeignException e) {
+            log.error("Failed to fetch slots from booking service for date {}: {}", date, e.getMessage());
+            return Collections.emptyList();
+        } catch (Exception e) {
+            log.error("Unexpected error while fetching slots from booking service for date {}", date, e);
+            return Collections.emptyList();
         }
     }
 }

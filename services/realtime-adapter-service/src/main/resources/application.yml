@@ -20,9 +20,6 @@ firebase:
   database-url: ${FIREBASE_DATABASE_URL}
   credentials-path: "classpath:courthub-db8c7-firebase-adminsdk-fbsvc-c01bf8b26a.json"
 
-services:
-  booking-url: ${BOOKING_SERVICE_URL:http://booking-service:8083}
-
 logging:
   level:
     root: INFO
