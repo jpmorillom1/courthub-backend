@@ -24,15 +24,6 @@ management:
     health:
       show-details: always
 
-# Internal service URLs
-services:
-  booking:
-    url: ${BOOKING_SERVICE_URL:http://localhost:8083}
-  court:
-    url: ${COURT_SERVICE_URL:http://localhost:8082}
-  user:
-    url: ${USER_SERVICE_URL:http://localhost:8081}
-
 logging:
   level:
     root: INFO

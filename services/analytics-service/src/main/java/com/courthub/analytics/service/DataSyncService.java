@@ -1,5 +1,8 @@
 package com.courthub.analytics.service;
 
+import com.courthub.analytics.client.BookingServiceFeignClient;
+import com.courthub.analytics.client.CourtServiceFeignClient;
+import com.courthub.analytics.client.UserServiceFeignClient;
 import com.courthub.common.dto.analytics.BookingInternalDTO;
 import com.courthub.common.dto.analytics.CourtIssueInternalDTO;
 import com.courthub.common.dto.analytics.UserInternalDTO;
@@ -15,15 +18,11 @@ import com.courthub.analytics.repository.OccupancyMetricRepository;
 import com.courthub.analytics.repository.PeakHoursMetricRepository;
 import com.courthub.analytics.repository.ReservationHistoryRepository;
 import com.courthub.analytics.repository.StudentRankingRepository;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDate;
 import java.time.YearMonth;
@@ -37,22 +36,15 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DataSyncService {
 
-    private final RestTemplate restTemplate;
+    private final BookingServiceFeignClient bookingServiceFeignClient;
+    private final UserServiceFeignClient userServiceFeignClient;
+    private final CourtServiceFeignClient courtServiceFeignClient;
     private final OccupancyMetricRepository occupancyMetricRepository;
     private final FacultyUsageMetricRepository facultyUsageMetricRepository;
     private final PeakHoursMetricRepository peakHoursMetricRepository;
     private final MaintenanceMetricRepository maintenanceMetricRepository;
     private final StudentRankingRepository studentRankingRepository;
     private final ReservationHistoryRepository reservationHistoryRepository;
-
-    @Value("${services.booking.url}")
-    private String bookingServiceUrl;
-
-    @Value("${services.court.url}")
-    private String courtServiceUrl;
-
-    @Value("${services.user.url}")
-    private String userServiceUrl;
 
     private static final Map<String, String> FACULTY_COLORS = Map.ofEntries(
             Map.entry("INGENIERÍA Y CIENCIAS APLICADAS", "#00458d"), // FICA
@@ -104,14 +96,11 @@ public class DataSyncService {
 
     private List<BookingInternalDTO> extractBookings() {
         try {
-            String url = bookingServiceUrl + "/bookings/internal/bookings/all";
-            ResponseEntity<List<BookingInternalDTO>> response = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<List<BookingInternalDTO>>() {}
-            );
-            return response.getBody() != null ? response.getBody() : Collections.emptyList();
+            List<BookingInternalDTO> bookings = bookingServiceFeignClient.getAllBookings();
+            return bookings != null ? bookings : Collections.emptyList();
+        } catch (FeignException e) {
+            log.error("Error extracting bookings from booking-service", e);
+            return Collections.emptyList();
         } catch (Exception e) {
             log.error("Error extracting bookings from booking-service", e);
             return Collections.emptyList();
@@ -120,14 +109,11 @@ public class DataSyncService {
 
     private List<UserInternalDTO> extractUsers() {
         try {
-            String url = userServiceUrl + "/users/internal/users/all";
-            ResponseEntity<List<UserInternalDTO>> response = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<List<UserInternalDTO>>() {}
-            );
-            return response.getBody() != null ? response.getBody() : Collections.emptyList();
+            List<UserInternalDTO> users = userServiceFeignClient.getAllUsers();
+            return users != null ? users : Collections.emptyList();
+        } catch (FeignException e) {
+            log.error("Error extracting users from user-service", e);
+            return Collections.emptyList();
         } catch (Exception e) {
             log.error("Error extracting users from user-service", e);
             return Collections.emptyList();
@@ -136,14 +122,11 @@ public class DataSyncService {
 
     private List<CourtIssueInternalDTO> extractCourtIssues() {
         try {
-            String url = courtServiceUrl + "/courts/internal/courts/issues/all";
-            ResponseEntity<List<CourtIssueInternalDTO>> response = restTemplate.exchange(
-                url,
-                HttpMethod.GET,
-                null,
-                new ParameterizedTypeReference<List<CourtIssueInternalDTO>>() {}
-            );
-            return response.getBody() != null ? response.getBody() : Collections.emptyList();
+            List<CourtIssueInternalDTO> issues = courtServiceFeignClient.getAllCourtIssues();
+            return issues != null ? issues : Collections.emptyList();
+        } catch (FeignException e) {
+            log.error("Error extracting court issues from court-service", e);
+            return Collections.emptyList();
         } catch (Exception e) {
             log.error("Error extracting court issues from court-service", e);
             return Collections.emptyList();

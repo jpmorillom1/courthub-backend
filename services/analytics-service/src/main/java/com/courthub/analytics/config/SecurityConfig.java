@@ -16,7 +16,6 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-import org.springframework.web.client.RestTemplate;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -63,10 +62,10 @@ public class SecurityConfig {
         return new JwtAuthenticationFilter(jwtTokenProvider);
     }
 
-    @Bean
-    public RestTemplate restTemplate() {
-        return new RestTemplate();
-    }
+//    @Bean
+//    public RestTemplate restTemplate() {
+//        return new RestTemplate();
+//    }
 
     public static class JwtAuthenticationFilter extends OncePerRequestFilter {
 
