@@ -1,52 +1,48 @@
 package com.courthub.notification.service;
 
 import com.courthub.common.dto.UserDto;
+import com.courthub.notification.client.UserServiceFeignClient;
+import feign.FeignException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.web.client.RestTemplate;
 
-import java.util.Map;
 import java.util.UUID;
 
 /**
- * Client for communicating with user-service.
- * Fetches user data from PostgreSQL via HTTP.
+ * Client for communicating with user-service via OpenFeign.
+ * Fetches user data from PostgreSQL via HTTP with service discovery.
  */
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class UserServiceClient {
 
-    private final RestTemplate restTemplate;
-
-    @Value("${services.user-service.url}")
-    private String userServiceUrl;
-
+    private final UserServiceFeignClient userServiceFeignClient;
 
     public String getUserEmail(UUID userId) {
         try {
-            String url = userServiceUrl + "/users/" + userId;
-            UserDto response = restTemplate.getForObject(url, UserDto.class);
-            return (response != null) ? response.getEmail() : "customer@courthub.com";
-        } catch (Exception e) {
+            UserDto user = userServiceFeignClient.getUserById(userId);
+            return (user != null && user.getEmail() != null) ? user.getEmail() : "customer@courthub.com";
+        } catch (FeignException e) {
             log.warn("⚠️ User Service unreachable. Using fallback for ID: {}", userId);
-            return "valued.customer@example.com"; // Fallback para que el proceso siga
+            return "valued.customer@example.com";
+        } catch (Exception e) {
+            log.warn("⚠️ Unexpected error while fetching user email. Using fallback for ID: {}", userId);
+            return "valued.customer@example.com";
         }
     }
 
-
     public String getUserName(UUID userId) {
         try {
-            String url = userServiceUrl + "/users/" + userId;
-            Map<String, Object> response = restTemplate.getForObject(url, Map.class);
-            
-            if (response != null && response.containsKey("name")) {
-                return (String) response.get("name");
+            UserDto user = userServiceFeignClient.getUserById(userId);
+            if (user != null && user.getName() != null) {
+                return user.getName();
             }
-            
             throw new RuntimeException("User name not found for user ID: " + userId);
+        } catch (FeignException e) {
+            log.error("Failed to fetch user name from user service for user ID: {}", userId, e);
+            throw new RuntimeException("Failed to fetch user data", e);
         } catch (Exception e) {
             log.error("Failed to fetch user name for user ID: {}", userId, e);
             throw new RuntimeException("Failed to fetch user data", e);

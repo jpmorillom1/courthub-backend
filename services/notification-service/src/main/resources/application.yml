@@ -54,11 +54,6 @@ hivemq:
 jwt:
   secret: ${JWT_SECRET:your-256-bit-secret-key-must-be-at-least-256-bits-long-for-hmac-sha256}
 
-# External Services
-services:
-  user-service:
-    url: ${USER_SERVICE_URL:http://localhost:8081}
-
 # Logging
 logging:
   level:

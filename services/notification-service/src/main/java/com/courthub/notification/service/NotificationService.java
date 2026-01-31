@@ -32,6 +32,7 @@ public class NotificationService {
 
     private final NotificationRepository notificationRepository;
     private final UserServiceClient userServiceClient;
+    
     public NotificationService(
             @Qualifier("formalNotificationFactory") NotificationFactory formalFactory,
             @Qualifier("informalNotificationFactory") NotificationFactory informalFactory,
