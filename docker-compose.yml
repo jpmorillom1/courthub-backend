@@ -81,6 +81,32 @@ services:
     networks:
       - courthub-network
 
+  # Loki - Log aggregation system
+  loki:
+    image: grafana/loki:2.9.3
+    container_name: courthub-loki
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    networks:
+      - courthub-network
+    restart: unless-stopped
+
+  # Promtail - Log collector
+  promtail:
+    image: grafana/promtail:2.9.3
+    container_name: courthub-promtail
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - ./promtail-config.yml:/etc/promtail/config.yml:ro
+    command: -config.file=/etc/promtail/config.yml
+    depends_on:
+      - loki
+    networks:
+      - courthub-network
+    restart: unless-stopped
+
   # Eureka Server
   eureka-server:
     build:
@@ -89,6 +115,8 @@ services:
     container_name: courthub-eureka-server
     ports:
       - "8761:8761"
+    labels:
+      logging: "promtail"
     networks:
       - courthub-network
     restart: unless-stopped
@@ -107,6 +135,8 @@ services:
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
     ports:
       - "8081:8081"
+    labels:
+      logging: "promtail"
     depends_on:
       postgres:
         condition: service_healthy
@@ -131,6 +161,8 @@ services:
       SLOT_DURATION_MINUTES: ${SLOT_DURATION_MINUTES}
       SLOT_GENERATION_DAYS_FORWARD: ${SLOT_GENERATION_DAYS_FORWARD}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    labels:
+      logging: "promtail"
     ports:
       - "8083:8083"
     depends_on:
@@ -162,6 +194,8 @@ services:
       STRIPE_CANCEL_URL: ${STRIPE_CANCEL_URL}
       STRIPE_PRICE_PER_HOUR: ${STRIPE_PRICE_PER_HOUR}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    labels:
+      logging: "promtail"
     ports:
       - "8086:8086"
     depends_on:
@@ -190,6 +224,8 @@ services:
       GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
       GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    labels:
+      logging: "promtail"
     ports:
       - "8080:8080"
     depends_on:
@@ -215,6 +251,8 @@ services:
       REDIS_HOST: ${REDIS_HOST:-redis}
       REDIS_PORT: ${REDIS_PORT:-6379}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    labels:
+      logging: "promtail"
     ports:
       - "8082:8082"
     depends_on:
@@ -240,6 +278,8 @@ services:
       KAFKA_BOOTSTRAP_SERVERS: ${KAFKA_BOOTSTRAP_SERVERS}
       FIREBASE_DATABASE_URL: ${FIREBASE_DATABASE_URL}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    labels:
+      logging: "promtail"
     #      FIREBASE_CREDENTIALS_PATH: ${FIREBASE_CREDENTIALS_PATH:-/app/config/firebase-service-account.json}
     ports:
       - "8084:8084"
@@ -273,7 +313,8 @@ services:
       HIVEMQ_USERNAME: ${HIVEMQ_USERNAME}
       HIVEMQ_PASSWORD: ${HIVEMQ_PASSWORD}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
-
+    labels:
+      logging: "promtail"
     ports:
       - "8085:8085"
     depends_on:
@@ -303,6 +344,8 @@ services:
       PAYMENT_SERVICE_URL: ${PAYMENT_SERVICE_URL}
       NOTIFICATION_SERVICE_URL: ${NOTIFICATION_SERVICE_URL}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    labels:
+      logging: "promtail"
     ports:
       - "9000:9000"
     depends_on:
@@ -349,6 +392,7 @@ services:
       - "3000:3000"
     depends_on:
       - prometheus
+      - loki
     networks:
       - courthub-network
     restart: unless-stopped
@@ -365,6 +409,8 @@ services:
       COURT_SERVICE_URL: ${COURT_SERVICE_URL}
       USER_SERVICE_URL: ${USER_SERVICE_URL}
       EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://eureka-server:8761/eureka/
+    labels:
+      logging: "promtail"
     ports:
       - "8087:8087"
     depends_on:
