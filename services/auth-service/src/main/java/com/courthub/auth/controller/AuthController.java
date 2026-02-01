@@ -9,12 +9,14 @@ import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.core.user.OAuth2User;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/auth")
 @Tag(name = "Authentication", description = "Endpoints for authentication and authorization")
@@ -35,7 +37,9 @@ public class AuthController {
             @ApiResponse(responseCode = "400", description = "Invalid input data")
     })
     public ResponseEntity<AuthResponseDto> login(@Valid @RequestBody AuthRequestDto request) {
+        log.info("Login request received");
         AuthResponseDto response = authService.login(request);
+        log.info("Login completed successfully");
         return ResponseEntity.ok(response);
     }
 
@@ -46,7 +50,9 @@ public class AuthController {
             @ApiResponse(responseCode = "401", description = "Invalid or expired refresh token")
     })
     public ResponseEntity<AuthResponseDto> refresh(@Valid @RequestBody RefreshTokenRequestDto request) {
+        log.info("Refresh token request received");
         AuthResponseDto response = authService.refreshToken(request.getRefreshToken());
+        log.info("Refresh token completed successfully");
         return ResponseEntity.ok(response);
     }
 
@@ -59,15 +65,19 @@ public class AuthController {
     })
     public ResponseEntity<AuthResponseDto> oauth2Login(@AuthenticationPrincipal OAuth2User oauth2User) {
         if (oauth2User == null) {
+            log.warn("OAuth2 login attempted without authenticated principal");
             throw new org.springframework.security.authentication.AuthenticationCredentialsNotFoundException("OAuth2 authentication required");
         }
+        log.info("OAuth2 login request received");
         AuthResponseDto response = authService.oauth2Login(oauth2User);
+        log.info("OAuth2 login completed successfully");
         return ResponseEntity.ok(response);
     }
     
     @GetMapping("/oauth2/error")
     @Operation(summary = "OAuth2 Error", description = "Endpoint redirected to if OAuth2 authentication fails")
     public ResponseEntity<com.courthub.common.dto.ErrorResponseDto> oauth2Error() {
+        log.warn("OAuth2 error endpoint invoked");
         com.courthub.common.dto.ErrorResponseDto error = new com.courthub.common.dto.ErrorResponseDto(
                 401,
                 "OAuth2 Authentication Failed",

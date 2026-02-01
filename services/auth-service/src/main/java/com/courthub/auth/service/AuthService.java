@@ -12,6 +12,7 @@ import com.courthub.common.exception.NotFoundException;
 import com.courthub.common.exception.UnauthorizedException;
 import com.courthub.common.security.JwtTokenProvider;
 import feign.FeignException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -23,6 +24,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @Service
 public class AuthService {
 
@@ -44,6 +46,7 @@ public class AuthService {
     }
 
     public AuthResponseDto login(AuthRequestDto request) {
+        log.info("Authenticating user with credentials");
         Map<String, Object> validationResult = userServiceFeignClient.validateCredentials(
             new ValidateCredentialsDto(request.getEmail(), request.getPassword())
         );
@@ -51,12 +54,14 @@ public class AuthService {
         boolean isValid = validationResult != null && Boolean.TRUE.equals(validationResult.get("valid"));
         
         if (!isValid) {
+            log.warn("Authentication failed: invalid credentials");
             throw new UnauthorizedException("Invalid email or password");
         }
 
         UserDto user = getUserByEmailSafely(request.getEmail());
         
         if (user == null) {
+            log.warn("Authentication failed: user not found");
             throw new UnauthorizedException("User not found");
         }
         
@@ -65,13 +70,15 @@ public class AuthService {
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
 
         saveRefreshToken(user.getId(), refreshToken);
-
+        log.info("Authentication successful: userId={}", user.getId());
         return new AuthResponseDto(accessToken, refreshToken);
     }
 
     @Transactional
     public AuthResponseDto refreshToken(String refreshTokenString) {
+        log.info("Refreshing access token");
         if (!jwtTokenProvider.isRefreshToken(refreshTokenString)) {
+            log.warn("Refresh token rejected: invalid token type");
             throw new UnauthorizedException("Invalid refresh token");
         }
 
@@ -81,12 +88,14 @@ public class AuthService {
                 .orElseThrow(() -> new UnauthorizedException("Refresh token not found"));
 
         if (refreshToken.isExpired()) {
+            log.warn("Refresh token rejected: token expired");
             refreshTokenRepository.delete(refreshToken);
             throw new UnauthorizedException("Refresh token expired");
         }
 
         UserDto user = getUserByIdSafely(userId);
         if (user == null) {
+            log.warn("Refresh token failed: user not found userId={}", userId);
             throw new NotFoundException("User", userId);
         }
 
@@ -96,16 +105,18 @@ public class AuthService {
         String newRefreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
         saveRefreshToken(user.getId(), newRefreshToken);
         refreshTokenRepository.delete(refreshToken);
-
+        log.info("Refresh token completed successfully: userId={}", userId);
         return new AuthResponseDto(newAccessToken, newRefreshToken);
     }
 
     @Transactional
     public AuthResponseDto oauth2Login(OAuth2User oauth2User) {
+        log.info("Processing OAuth2 login");
         String email = oauth2User.getAttribute("email");
         String name = oauth2User.getAttribute("name");
 
         if (email == null) {
+            log.warn("OAuth2 login failed: email not provided by provider");
             throw new UnauthorizedException("Email not provided by OAuth2 provider");
         }
 
@@ -114,7 +125,7 @@ public class AuthService {
         try {
             user = getUserByEmailSafely(email);
         } catch (Exception e) {
-            System.out.println("El usuario no existe, se procederá a crearlo: " + email);
+            log.info("OAuth2 user not found, creating new account");
         }
 
         if (user == null) {
@@ -133,7 +144,7 @@ public class AuthService {
         String refreshToken = jwtTokenProvider.generateRefreshToken(user.getId());
 
         saveRefreshToken(user.getId(), refreshToken);
-
+        log.info("OAuth2 login successful: userId={}", user.getId());
         return new AuthResponseDto(accessToken, refreshToken);
     }
     
