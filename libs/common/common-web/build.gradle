@@ -9,4 +9,9 @@ dependencies {
     // Common dependencies
     api project(':libs:common:common-dto')
     api project(':libs:common:common-exception')
+
+    // Lombok
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+
 }
