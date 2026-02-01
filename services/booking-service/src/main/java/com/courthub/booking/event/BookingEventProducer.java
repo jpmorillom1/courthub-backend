@@ -2,12 +2,14 @@ package com.courthub.booking.event;
 
 import com.courthub.booking.domain.Booking;
 import com.courthub.booking.domain.TimeSlot; 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+@Slf4j
 @Component
 public class BookingEventProducer {
 
@@ -25,11 +27,13 @@ public class BookingEventProducer {
 
     
     public void sendBookingCreated(Booking booking, TimeSlot timeSlot) {
+        log.info("Publishing booking.created event: bookingId={}, timeSlotId={}", booking.getId(), timeSlot.getId());
         publishAfterCommit(bookingCreatedTopic, mapBookingEvent(booking, timeSlot));
     }
 
     
     public void sendBookingCancelled(Booking booking, TimeSlot timeSlot) {
+        log.info("Publishing booking.cancelled event: bookingId={}, timeSlotId={}", booking.getId(), timeSlot.getId());
         publishAfterCommit(bookingCancelledTopic, mapBookingEvent(booking, timeSlot));
     }
 

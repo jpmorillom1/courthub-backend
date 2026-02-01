@@ -6,16 +6,14 @@ import com.courthub.booking.repository.BookingRepository;
 import com.courthub.booking.service.BookingService;
 import com.courthub.common.dto.PaymentEventPayload;
 import com.courthub.common.exception.NotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Component
 public class PaymentEventListener {
-
-    private static final Logger logger = LoggerFactory.getLogger(PaymentEventListener.class);
 
     private final BookingRepository bookingRepository;
     private final BookingService bookingService;
@@ -32,7 +30,7 @@ public class PaymentEventListener {
     )
     @Transactional
     public void handlePaymentConfirmed(PaymentEventPayload event) {
-        logger.info("Received payment.confirmed event for booking: {}", event.bookingId());
+        log.info("Received payment.confirmed event: bookingId={}", event.bookingId());
 
         try {
             Booking booking = bookingRepository.findById(event.bookingId())
@@ -41,13 +39,13 @@ public class PaymentEventListener {
             if (booking.getStatus() == BookingStatus.PENDING_PAYMENT) {
                 booking.setStatus(BookingStatus.CONFIRMED);
                 bookingRepository.save(booking);
-                logger.info("Booking {} status updated to CONFIRMED", event.bookingId());
+                log.info("Booking status updated to CONFIRMED: bookingId={}", event.bookingId());
             } else {
-                logger.warn("Booking {} is not in PENDING_PAYMENT status. Current status: {}", 
+                log.warn("Booking not in PENDING_PAYMENT status: bookingId={}, status={}", 
                         event.bookingId(), booking.getStatus());
             }
         } catch (Exception e) {
-            logger.error("Error processing payment.confirmed event for booking: {}", event.bookingId(), e);
+            log.error("Error processing payment.confirmed event: bookingId={}", event.bookingId(), e);
         }
     }
 
@@ -58,7 +56,7 @@ public class PaymentEventListener {
     )
     @Transactional
     public void handlePaymentFailed(PaymentEventPayload event) {
-        logger.info("Received payment.failed event for booking: {}", event.bookingId());
+        log.info("Received payment.failed event: bookingId={}", event.bookingId());
 
         try {
             Booking booking = bookingRepository.findById(event.bookingId())
@@ -67,10 +65,10 @@ public class PaymentEventListener {
             if (booking.getStatus() == BookingStatus.PENDING_PAYMENT) {
                 booking.setStatus(BookingStatus.PAYMENT_FAILED);
                 bookingRepository.save(booking);
-                logger.info("Booking {} status updated to PAYMENT_FAILED", event.bookingId());
+                log.info("Booking status updated to PAYMENT_FAILED: bookingId={}", event.bookingId());
             }
         } catch (Exception e) {
-            logger.error("Error processing payment.failed event for booking: {}", event.bookingId(), e);
+            log.error("Error processing payment.failed event: bookingId={}", event.bookingId(), e);
         }
     }
 
@@ -81,13 +79,13 @@ public class PaymentEventListener {
     )
     @Transactional
     public void handlePaymentExpired(PaymentEventPayload event) {
-        logger.info("Received payment.expired event for booking: {}", event.bookingId());
+        log.info("Received payment.expired event: bookingId={}", event.bookingId());
 
         try {
             bookingService.handleExpiredPayment(event.bookingId());
-            logger.info("Successfully handled expired payment for booking: {}", event.bookingId());
+            log.info("Expired payment handled successfully: bookingId={}", event.bookingId());
         } catch (Exception e) {
-            logger.error("Error processing payment.expired event for booking: {}", event.bookingId(), e);
+            log.error("Error processing payment.expired event: bookingId={}", event.bookingId(), e);
         }
     }
 }

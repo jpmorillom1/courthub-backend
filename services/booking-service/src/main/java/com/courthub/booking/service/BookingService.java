@@ -13,8 +13,7 @@ import com.courthub.booking.repository.BookingRepository;
 import com.courthub.booking.repository.TimeSlotRepository;
 import com.courthub.common.exception.BusinessException;
 import com.courthub.common.exception.NotFoundException;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,10 +23,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class BookingService {
-
-    private static final Logger log = LoggerFactory.getLogger(BookingService.class);
 
     private final BookingRepository bookingRepository;
     private final TimeSlotRepository timeSlotRepository;
@@ -43,6 +41,8 @@ public class BookingService {
 
     @Transactional
     public BookingResponse createBooking(UUID userId, CreateBookingRequest request) {
+        log.info("Creating booking: userId={}, courtId={}, date={}, startTime={}",
+                userId, request.getCourtId(), request.getDate(), request.getStartTime());
         if (request.getDate().isBefore(LocalDate.now())) {
             throw new BusinessException("Cannot create booking for past dates");
         }
@@ -74,10 +74,13 @@ public class BookingService {
 
         bookingEventProducer.sendBookingCreated(saved, timeSlot);
 
+        log.info("Booking created successfully: bookingId={}, timeSlotId={}", saved.getId(), timeSlot.getId());
+
         return toBookingResponse(saved, timeSlot);
     }
 
     public List<AvailabilitySlotResponse> getAvailableSlots(UUID courtId, LocalDate date) {
+        log.debug("Fetching available slots: courtId={}, date={}", courtId, date);
         return timeSlotRepository.findByCourtIdAndDateAndStatusOrderByStartTime(
                         courtId,
                         date,
@@ -88,6 +91,7 @@ public class BookingService {
     }
 
     public List<AvailabilitySlotResponse> getAllSlotsByDate(LocalDate date) {
+        log.debug("Fetching all slots by date: date={}", date);
         return timeSlotRepository.findByDate(date)
                 .stream()
                 .map(this::toAvailabilityResponse)
@@ -95,6 +99,7 @@ public class BookingService {
     }
 
     public List<BookingResponse> getBookingsByUserId(UUID userId) {
+        log.debug("Fetching bookings by userId={}", userId);
         return bookingRepository.findByUserId(userId)
                 .stream()
                 .map(booking -> {
@@ -106,6 +111,7 @@ public class BookingService {
     }
 
     public BookingResponse getBookingById(UUID bookingId) {
+        log.debug("Fetching booking by id={}", bookingId);
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new NotFoundException("Booking", bookingId));
         TimeSlot timeSlot = timeSlotRepository.findById(booking.getTimeSlotId())
@@ -115,6 +121,7 @@ public class BookingService {
 
     @Transactional
     public BookingResponse cancelBooking(UUID bookingId) {
+        log.info("Cancelling booking: bookingId={}", bookingId);
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new NotFoundException("Booking", bookingId));
 
@@ -133,11 +140,14 @@ public class BookingService {
 
         bookingEventProducer.sendBookingCancelled(saved, timeSlot);
 
+        log.info("Booking cancelled successfully: bookingId={}, timeSlotId={}", bookingId, timeSlot.getId());
+
         return toBookingResponse(saved, timeSlot);
     }
 
     @Transactional
     public void handleExpiredPayment(UUID bookingId) {
+        log.info("Handling expired payment for bookingId={}", bookingId);
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new NotFoundException("Booking", bookingId));
 
@@ -189,10 +199,12 @@ public class BookingService {
     @Scheduled(cron = "0 0 2 * * *")
     @Transactional
     public void cleanupOldTimeSlots() {
-        log.info("Starting cleanup of old time slots at {}", LocalDate.now());
+        long start = System.currentTimeMillis();
+        log.info("Starting cleanup of old time slots");
         try {
             timeSlotRepository.deleteOldUnusedSlots(LocalDate.now(), TimeSlotStatus.AVAILABLE);
-            log.info("Successfully completed cleanup of old time slots");
+            long durationMs = System.currentTimeMillis() - start;
+            log.info("Completed cleanup of old time slots: durationMs={}", durationMs);
         } catch (Exception e) {
             log.error("Error during time slot cleanup", e);
             throw e;
@@ -200,6 +212,7 @@ public class BookingService {
     }
 
     public List<com.courthub.common.dto.analytics.BookingInternalDTO> getAllBookingsForAnalytics() {
+        log.debug("Fetching all bookings for analytics");
         return bookingRepository.findAll().stream()
             .map(this::toBookingInternalDTO)
             .collect(Collectors.toList());
