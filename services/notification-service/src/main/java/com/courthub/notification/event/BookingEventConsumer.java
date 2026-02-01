@@ -14,16 +14,15 @@ public class BookingEventConsumer {
 
     private final NotificationService notificationService;
 
-
-    @KafkaListener(topics = "booking.created", groupId = "notification-service-group")
-    public void handleBookingCreated(BookingEventPayload event) {
-        log.info("Received booking.created event for booking ID: {}", event.getBookingId());
-
-        try {
-            notificationService.sendBookingConfirmation(event);
-            log.info("Successfully processed booking.created event for booking ID: {}", event.getBookingId());
-        } catch (Exception e) {
-            log.error("Failed to process booking.created event for booking ID: {}", event.getBookingId(), e);
-        }
-    }
+    // @KafkaListener(topics = "booking.created", groupId = "notification-service-group")
+    // public void handleBookingCreated(BookingEventPayload event) {
+    //     log.info("Received booking.created event for booking ID: {}", event.getBookingId());
+    //
+    //     try {
+    //         notificationService.sendBookingConfirmation(event);
+    //         log.info("Successfully processed booking.created event for booking ID: {}", event.getBookingId());
+    //     } catch (Exception e) {
+    //         log.error("Failed to process booking.created event for booking ID: {}", event.getBookingId(), e);
+    //     }
+    // }
 }

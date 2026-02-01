@@ -1,5 +1,6 @@
 package com.courthub.notification.service;
 
+import com.courthub.common.dto.PaymentEventPayload;
 import com.courthub.notification.domain.NotificationChannel;
 import com.courthub.notification.domain.NotificationLog;
 import com.courthub.notification.domain.NotificationType;
@@ -125,6 +126,54 @@ public class NotificationService {
                 event.getStartTime().format(timeService),
                 event.getEndTime().format(timeService),
                 event.getStatus()
+        );
+    }
+
+    public void sendPaymentConfirmationEmail(PaymentEventPayload event) {
+        log.info("Sending payment confirmation email for booking ID: {}", event.bookingId());
+
+        String userEmail = userServiceClient.getUserEmail(event.userId());
+
+        MessageBody messageBody = formalFactory.createMessageBody();
+        DeliveryChannel deliveryChannel = formalFactory.createDeliveryChannel();
+
+        String paymentData = formatPaymentData(event);
+        String formattedMessage = messageBody.format(paymentData);
+
+        NotificationLog log = NotificationLog.builder()
+                .userId(event.userId())
+                .type(NotificationType.FORMAL)
+                .channel(NotificationChannel.EMAIL)
+                .message(formattedMessage)
+                .recipient(userEmail)
+                .subject("Payment Confirmation - Booking Confirmed")
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        try {
+            deliveryChannel.send(userEmail, formattedMessage);
+            log.setSuccess(true);
+        } catch (Exception e) {
+            log.setSuccess(false);
+            log.setErrorMessage(e.getMessage());
+            throw e;
+        } finally {
+            notificationRepository.save(log);
+        }
+    }
+
+    private String formatPaymentData(PaymentEventPayload event) {
+        return String.format(
+                "Your payment has been confirmed and your booking is now active!\n\n" +
+                        "Booking ID: %s\n" +
+                        "Payment ID: %s\n" +
+                        "Amount: %s %s\n" +
+                        "Status: %s",
+                event.bookingId(),
+                event.paymentId(),
+                event.amount(),
+                event.currency(),
+                event.status()
         );
     }
 }
