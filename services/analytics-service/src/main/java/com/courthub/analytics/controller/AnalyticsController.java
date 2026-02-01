@@ -41,6 +41,7 @@ public class AnalyticsController {
     public ResponseEntity<DashboardResponse> getDashboard() {
         log.info("Fetching analytics dashboard [ADMIN]");
         DashboardResponse dashboard = analyticsService.getDashboard();
+        log.info("Analytics dashboard returned successfully [ADMIN]");
         return ResponseEntity.ok(dashboard);
     }
 

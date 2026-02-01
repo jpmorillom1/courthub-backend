@@ -43,6 +43,7 @@ public class AnalyticsService {
 
     public DashboardResponse getDashboard() {
         LocalDate today = LocalDate.now();
+        log.info("Building analytics dashboard for date={}", today);
 
         KPIsResponse kpis = buildKPIs(today);
 
@@ -54,7 +55,10 @@ public class AnalyticsService {
 
         List<ReservationHistoryResponse> reservationsHistory = buildReservationHistory();
 
-        return new DashboardResponse(kpis, heatmap, facultyUsage, topActiveStudents, reservationsHistory);
+        DashboardResponse response = new DashboardResponse(kpis, heatmap, facultyUsage, topActiveStudents, reservationsHistory);
+        log.info("Analytics dashboard built successfully: facultyUsageCount={}, topStudentsCount={}, historyCount={}",
+            facultyUsage.size(), topActiveStudents.size(), reservationsHistory.size());
+        return response;
     }
 
     private KPIsResponse buildKPIs(LocalDate date) {

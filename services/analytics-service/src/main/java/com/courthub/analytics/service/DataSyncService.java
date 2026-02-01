@@ -71,12 +71,15 @@ public class DataSyncService {
     );
     @Scheduled(cron = "0 0 * * * *") // Cada hora
     public void syncAnalyticsData() {
-        log.info("Starting analytics data sync...");
-        log.info("Applying upsert updates to existing metrics to maintain dashboard integrity.");
+        long start = System.currentTimeMillis();
+        log.info("Starting analytics data sync");
         try {
             List<BookingInternalDTO> bookings = extractBookings();
             List<UserInternalDTO> users = extractUsers();
             List<CourtIssueInternalDTO> courtIssues = extractCourtIssues();
+
+            log.info("Analytics data extracted: bookings={}, users={}, courtIssues={}",
+                    bookings.size(), users.size(), courtIssues.size());
 
             Map<String, UserInternalDTO> userMap = users.stream()
                 .collect(Collectors.toMap(UserInternalDTO::id, u -> u));
@@ -88,7 +91,8 @@ public class DataSyncService {
             processStudentRanking(bookings, userMap);
             processReservationHistory(bookings);
 
-            log.info("Analytics data sync completed successfully");
+            long durationMs = System.currentTimeMillis() - start;
+            log.info("Analytics data sync completed successfully: durationMs={}", durationMs);
         } catch (Exception e) {
             log.error("Error during analytics data sync", e);
         }
@@ -99,7 +103,7 @@ public class DataSyncService {
             List<BookingInternalDTO> bookings = bookingServiceFeignClient.getAllBookings();
             return bookings != null ? bookings : Collections.emptyList();
         } catch (FeignException e) {
-            log.error("Error extracting bookings from booking-service", e);
+            log.warn("Failed to extract bookings from booking-service", e);
             return Collections.emptyList();
         } catch (Exception e) {
             log.error("Error extracting bookings from booking-service", e);
@@ -112,7 +116,7 @@ public class DataSyncService {
             List<UserInternalDTO> users = userServiceFeignClient.getAllUsers();
             return users != null ? users : Collections.emptyList();
         } catch (FeignException e) {
-            log.error("Error extracting users from user-service", e);
+            log.warn("Failed to extract users from user-service", e);
             return Collections.emptyList();
         } catch (Exception e) {
             log.error("Error extracting users from user-service", e);
@@ -125,7 +129,7 @@ public class DataSyncService {
             List<CourtIssueInternalDTO> issues = courtServiceFeignClient.getAllCourtIssues();
             return issues != null ? issues : Collections.emptyList();
         } catch (FeignException e) {
-            log.error("Error extracting court issues from court-service", e);
+            log.warn("Failed to extract court issues from court-service", e);
             return Collections.emptyList();
         } catch (Exception e) {
             log.error("Error extracting court issues from court-service", e);
@@ -265,6 +269,7 @@ public class DataSyncService {
 
     private void processStudentRanking(List<BookingInternalDTO> bookings, Map<String, UserInternalDTO> userMap) {
         if (bookings.isEmpty()) {
+            log.debug("Skipping student ranking: no bookings available");
             return;
         }
 
@@ -310,6 +315,7 @@ public class DataSyncService {
 
     private void processReservationHistory(List<BookingInternalDTO> bookings) {
         if (bookings.isEmpty()) {
+            log.debug("Skipping reservation history: no bookings available");
             return;
         }
 
