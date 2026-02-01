@@ -14,7 +14,7 @@ import org.springframework.context.annotation.Configuration;
 public class MqttConfig {
 
     @Value("${hivemq.broker-url}")
-    private String brokerUrl; // Ahora será tcp://broker.hivemq.com:1883
+    private String brokerUrl;
 
     @Value("${hivemq.client-id}")
     private String clientId;
@@ -26,7 +26,6 @@ public class MqttConfig {
         MqttClient client = new MqttClient(brokerUrl, clientId);
         MqttConnectOptions options = new MqttConnectOptions();
 
-        // Al ser un broker público gratuito, omitimos setUserName y setPassword
         options.setCleanSession(true);
         options.setAutomaticReconnect(true);
         options.setConnectionTimeout(10);
@@ -37,8 +36,7 @@ public class MqttConfig {
             log.info("Successfully connected to Public HiveMQ broker");
         } catch (MqttException e) {
             log.error("Failed to connect to HiveMQ broker. Error: {}", e.getMessage());
-            // Opcional: No lanzar la excepción si quieres que el microservicio
-            // arranque aunque el MQTT falle (resiliencia).
+
             throw e;
         }
 

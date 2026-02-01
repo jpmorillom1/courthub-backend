@@ -26,4 +26,16 @@ public class PaymentEventConsumer {
             log.error("Failed to process payment.confirmed event for booking ID: {}", event.bookingId(), e);
         }
     }
+
+    @KafkaListener(topics = "payment.expired", groupId = "notification-service-group")
+    public void handlePaymentExpired(PaymentEventPayload event) {
+        log.info("Received payment.expired event for booking ID: {}", event.bookingId());
+
+        try {
+            notificationService.sendPaymentExpiredNotification(event);
+            log.info("Successfully processed payment.expired event for booking ID: {}", event.bookingId());
+        } catch (Exception e) {
+            log.error("Failed to process payment.expired event for booking ID: {}", event.bookingId(), e);
+        }
+    }
 }

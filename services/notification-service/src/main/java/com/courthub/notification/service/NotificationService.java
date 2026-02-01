@@ -176,4 +176,38 @@ public class NotificationService {
                 event.status()
         );
     }
+
+    public void sendPaymentExpiredNotification(PaymentEventPayload event) {
+        log.info("Sending payment expired notification via MQTT for booking ID: {}", event.bookingId());
+
+        MessageBody messageBody = informalFactory.createMessageBody();
+        DeliveryChannel deliveryChannel = informalFactory.createDeliveryChannel();
+
+        String expireMessage = String.format(
+                "Your payment for booking %s has expired. Please renew your payment to keep your booking active.",
+                event.bookingId()
+        );
+        String formattedMessage = messageBody.format(expireMessage);
+
+        NotificationLog log = NotificationLog.builder()
+                .userId(event.userId())
+                .type(NotificationType.INFORMAL)
+                .channel(NotificationChannel.MQTT)
+                .message(formattedMessage)
+                .recipient(event.userId().toString())
+                .subject("Payment Expired - Action Required")
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        try {
+            deliveryChannel.send(event.userId().toString(), formattedMessage);
+            log.setSuccess(true);
+        } catch (Exception e) {
+            log.setSuccess(false);
+            log.setErrorMessage(e.getMessage());
+            throw e;
+        } finally {
+            notificationRepository.save(log);
+        }
+    }
 }

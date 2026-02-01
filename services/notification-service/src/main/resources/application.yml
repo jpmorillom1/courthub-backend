@@ -47,7 +47,7 @@ hivemq:
   username: ${HIVEMQ_USERNAME}
   password: ${HIVEMQ_PASSWORD}
   client-id: courthub-notification-service-${random.uuid}
-  topic: ${HIVEMQ_TOPIC:testing}
+  topic: ${HIVEMQ_TOPIC:courthub}
   qos: ${HIVEMQ_QOS:1}
 
 # JWT Configuration
