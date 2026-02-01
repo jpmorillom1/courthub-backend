@@ -7,6 +7,7 @@ import com.courthub.common.exception.NotFoundException;
 import com.courthub.common.exception.UnauthorizedException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.FieldError;
@@ -17,12 +18,14 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
     @ExceptionHandler(NotFoundException.class)
     public ResponseEntity<ErrorResponseDto> handleNotFoundException(
             NotFoundException ex, HttpServletRequest request) {
+        log.warn("Not found: path={} message={}", request.getRequestURI(), ex.getMessage());
         ErrorResponseDto error = new ErrorResponseDto(
                 HttpStatus.NOT_FOUND.value(),
                 "Not Found",
@@ -35,6 +38,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ErrorResponseDto> handleUnauthorizedException(
             UnauthorizedException ex, HttpServletRequest request) {
+        log.warn("Unauthorized: path={} message={}", request.getRequestURI(), ex.getMessage());
         ErrorResponseDto error = new ErrorResponseDto(
                 HttpStatus.UNAUTHORIZED.value(),
                 "Unauthorized",
@@ -47,6 +51,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ForbiddenException.class)
     public ResponseEntity<ErrorResponseDto> handleForbiddenException(
             ForbiddenException ex, HttpServletRequest request) {
+        log.warn("Forbidden: path={} message={}", request.getRequestURI(), ex.getMessage());
         ErrorResponseDto error = new ErrorResponseDto(
                 HttpStatus.FORBIDDEN.value(),
                 "Forbidden",
@@ -59,6 +64,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponseDto> handleBusinessException(
             BusinessException ex, HttpServletRequest request) {
+        log.warn("Business error: path={} message={}", request.getRequestURI(), ex.getMessage());
         ErrorResponseDto error = new ErrorResponseDto(
                 HttpStatus.BAD_REQUEST.value(),
                 "Business Error",
@@ -71,6 +77,8 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, Object>> handleValidationExceptions(
             MethodArgumentNotValidException ex, HttpServletRequest request) {
+        log.warn("Validation failed: path={} errors={}",
+                request.getRequestURI(), ex.getBindingResult().getErrorCount());
         Map<String, String> errors = new HashMap<>();
         ex.getBindingResult().getAllErrors().forEach((error) -> {
             String fieldName = ((FieldError) error).getField();
@@ -92,6 +100,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponseDto> handleConstraintViolationException(
             ConstraintViolationException ex, HttpServletRequest request) {
+        log.warn("Constraint violation: path={} message={}", request.getRequestURI(), ex.getMessage());
         ErrorResponseDto error = new ErrorResponseDto(
                 HttpStatus.BAD_REQUEST.value(),
                 "Validation Error",
@@ -104,6 +113,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponseDto> handleGenericException(
             Exception ex, HttpServletRequest request) {
+        log.error("Unhandled exception: path={}", request.getRequestURI(), ex);
         ErrorResponseDto error = new ErrorResponseDto(
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "Internal Server Error",
