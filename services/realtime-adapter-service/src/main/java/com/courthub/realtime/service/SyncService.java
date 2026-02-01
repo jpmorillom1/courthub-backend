@@ -32,7 +32,8 @@ public class SyncService {
      */
     @Scheduled(cron = "0 */15 * * * *")
     public void reconcileAvailability() {
-        log.info("Starting reconciliation loop...");
+        long start = System.currentTimeMillis();
+        log.info("Starting reconciliation loop");
         
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = startDate.plusDays(7);
@@ -41,7 +42,8 @@ public class SyncService {
             for (LocalDate date = startDate; !date.isAfter(endDate); date = date.plusDays(1)) {
                 reconcileDateSlots(date);
             }
-            log.info("Reconciliation loop completed successfully");
+            long durationMs = System.currentTimeMillis() - start;
+            log.info("Reconciliation loop completed successfully: durationMs={}", durationMs);
         } catch (Exception e) {
             log.error("Unexpected error during reconciliation loop", e);
         }
@@ -77,7 +79,7 @@ public class SyncService {
             
             log.debug("Successfully reconciled {} slots for date {}", slots.size(), date);
         } catch (Exception e) {
-            log.error("Failed to reconcile slots for date {}: {}", date, e.getMessage());
+            log.error("Failed to reconcile slots for date {}", date, e);
             // Continue with next date despite error
         }
     }
@@ -88,7 +90,7 @@ public class SyncService {
             log.info("Successfully retrieved {} slots for date {}", slots != null ? slots.size() : 0, date);
             return slots != null ? slots : Collections.emptyList();
         } catch (FeignException e) {
-            log.error("Failed to fetch slots from booking service for date {}: {}", date, e.getMessage());
+            log.warn("Failed to fetch slots from booking service for date {}", date, e);
             return Collections.emptyList();
         } catch (Exception e) {
             log.error("Unexpected error while fetching slots from booking service for date {}", date, e);
