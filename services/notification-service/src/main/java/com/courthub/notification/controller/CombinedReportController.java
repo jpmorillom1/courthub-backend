@@ -85,6 +85,8 @@ public class CombinedReportController {
                 .map(this::mapToDetailDto)
                 .collect(Collectors.toList());
 
+                log.info("Notifications returned for user ID: {} count={}", userId, details.size());
+
         return ResponseEntity.ok(details);
     }
 

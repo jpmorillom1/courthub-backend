@@ -25,10 +25,10 @@ public class UserServiceClient {
             UserDto user = userServiceFeignClient.getUserById(userId);
             return (user != null && user.getEmail() != null) ? user.getEmail() : "customer@courthub.com";
         } catch (FeignException e) {
-            log.warn("⚠️ User Service unreachable. Using fallback for ID: {}", userId);
+            log.warn("User service unavailable when fetching email. Using fallback: userId={}", userId, e);
             return "valued.customer@example.com";
         } catch (Exception e) {
-            log.warn("⚠️ Unexpected error while fetching user email. Using fallback for ID: {}", userId);
+            log.warn("Unexpected error while fetching user email. Using fallback: userId={}", userId, e);
             return "valued.customer@example.com";
         }
     }

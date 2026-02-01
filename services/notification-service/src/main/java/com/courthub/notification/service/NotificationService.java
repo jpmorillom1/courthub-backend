@@ -59,7 +59,7 @@ public class NotificationService {
         String bookingData = formatBookingData(event);
         String formattedMessage = messageBody.format(bookingData);
 
-        NotificationLog log = NotificationLog.builder()
+        NotificationLog notificationLog = NotificationLog.builder()
                 .userId(event.getUserId())
                 .type(NotificationType.FORMAL)
                 .channel(NotificationChannel.EMAIL)
@@ -71,13 +71,15 @@ public class NotificationService {
 
         try {
             deliveryChannel.send(userEmail, formattedMessage);
-            log.setSuccess(true);
+            notificationLog.setSuccess(true);
+            log.info("Booking confirmation sent successfully: bookingId={}", event.getBookingId());
         } catch (Exception e) {
-            log.setSuccess(false);
-            log.setErrorMessage(e.getMessage());
+            notificationLog.setSuccess(false);
+            notificationLog.setErrorMessage(e.getMessage());
+            log.error("Failed to send booking confirmation: bookingId={}", event.getBookingId(), e);
             throw e;
         } finally {
-            notificationRepository.save(log);
+            notificationRepository.save(notificationLog);
         }
     }
 
@@ -90,7 +92,7 @@ public class NotificationService {
 
         String formattedMessage = messageBody.format(message);
 
-        NotificationLog log = NotificationLog.builder()
+        NotificationLog notificationLog = NotificationLog.builder()
                 .userId(userId)
                 .type(NotificationType.INFORMAL)
                 .channel(NotificationChannel.MQTT)
@@ -101,13 +103,15 @@ public class NotificationService {
 
         try {
             deliveryChannel.send(userId.toString(), formattedMessage);
-            log.setSuccess(true);
+            notificationLog.setSuccess(true);
+            log.info("Informal notification sent successfully: userId={}", userId);
         } catch (Exception e) {
-            log.setSuccess(false);
-            log.setErrorMessage(e.getMessage());
+            notificationLog.setSuccess(false);
+            notificationLog.setErrorMessage(e.getMessage());
+            log.error("Failed to send informal notification: userId={}", userId, e);
             throw e;
         } finally {
-            notificationRepository.save(log);
+            notificationRepository.save(notificationLog);
         }
     }
 
@@ -140,7 +144,7 @@ public class NotificationService {
         String paymentData = formatPaymentData(event);
         String formattedMessage = messageBody.format(paymentData);
 
-        NotificationLog log = NotificationLog.builder()
+        NotificationLog notificationLog = NotificationLog.builder()
                 .userId(event.userId())
                 .type(NotificationType.FORMAL)
                 .channel(NotificationChannel.EMAIL)
@@ -152,13 +156,15 @@ public class NotificationService {
 
         try {
             deliveryChannel.send(userEmail, formattedMessage);
-            log.setSuccess(true);
+            notificationLog.setSuccess(true);
+            log.info("Payment confirmation email sent successfully: bookingId={}", event.bookingId());
         } catch (Exception e) {
-            log.setSuccess(false);
-            log.setErrorMessage(e.getMessage());
+            notificationLog.setSuccess(false);
+            notificationLog.setErrorMessage(e.getMessage());
+            log.error("Failed to send payment confirmation email: bookingId={}", event.bookingId(), e);
             throw e;
         } finally {
-            notificationRepository.save(log);
+            notificationRepository.save(notificationLog);
         }
     }
 
@@ -189,7 +195,7 @@ public class NotificationService {
         );
         String formattedMessage = messageBody.format(expireMessage);
 
-        NotificationLog log = NotificationLog.builder()
+        NotificationLog notificationLog = NotificationLog.builder()
                 .userId(event.userId())
                 .type(NotificationType.INFORMAL)
                 .channel(NotificationChannel.MQTT)
@@ -201,13 +207,15 @@ public class NotificationService {
 
         try {
             deliveryChannel.send(event.userId().toString(), formattedMessage);
-            log.setSuccess(true);
+            notificationLog.setSuccess(true);
+            log.info("Payment expired notification sent successfully: bookingId={}", event.bookingId());
         } catch (Exception e) {
-            log.setSuccess(false);
-            log.setErrorMessage(e.getMessage());
+            notificationLog.setSuccess(false);
+            notificationLog.setErrorMessage(e.getMessage());
+            log.error("Failed to send payment expired notification: bookingId={}", event.bookingId(), e);
             throw e;
         } finally {
-            notificationRepository.save(log);
+            notificationRepository.save(notificationLog);
         }
     }
 }

@@ -35,7 +35,7 @@ public class MqttConfig {
             client.connect(options);
             log.info("Successfully connected to Public HiveMQ broker");
         } catch (MqttException e) {
-            log.error("Failed to connect to HiveMQ broker. Error: {}", e.getMessage());
+            log.error("Failed to connect to HiveMQ broker", e);
 
             throw e;
         }
