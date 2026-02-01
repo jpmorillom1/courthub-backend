@@ -2,12 +2,14 @@ package com.courthub.court.event;
 
 import com.courthub.court.domain.Court;
 import com.courthub.court.domain.CourtSchedule;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
+@Slf4j
 @Component
 public class CourtEventProducer {
 
@@ -30,18 +32,22 @@ public class CourtEventProducer {
     }
 
     public void sendCourtCreated(Court court) {
+        log.info("Publishing court.created event: courtId={}", court.getId());
         publishAfterCommit(courtCreatedTopic, mapCourtEvent(court));
     }
 
     public void sendCourtUpdated(Court court) {
+        log.info("Publishing court.updated event: courtId={}", court.getId());
         publishAfterCommit(courtUpdatedTopic, mapCourtEvent(court));
     }
 
     public void sendCourtStatusChanged(Court court) {
+        log.info("Publishing court.status.changed event: courtId={}, status={}", court.getId(), court.getStatus());
         publishAfterCommit(courtStatusChangedTopic, mapCourtEvent(court));
     }
 
     public void sendCourtScheduleUpdated(Court court, CourtSchedule schedule) {
+        log.info("Publishing court.schedule.updated event: courtId={}, dayOfWeek={}", court.getId(), schedule.getDayOfWeek());
         publishAfterCommit(courtScheduleUpdatedTopic, mapScheduleEvent(court, schedule));
     }
 

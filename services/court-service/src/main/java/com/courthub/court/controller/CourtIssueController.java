@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -22,6 +23,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/courts")
 @Tag(name = "Court Issues", description = "Court issues and incident management endpoints.")
@@ -39,6 +41,7 @@ public class CourtIssueController {
             @ApiResponse(responseCode = "200", description = "List of severity levels returned")
     })
     public ResponseEntity<List<IssueSeverity>> getSeverityLevels() {
+        log.info("Get issue severity levels request received");
         return ResponseEntity.ok(Arrays.asList(IssueSeverity.values()));
     }
 
@@ -58,10 +61,13 @@ public class CourtIssueController {
             Authentication authentication) {
 
         UUID userId = extractUserId(authentication);
+        log.info("Report court issue request received: courtId={}, reporterId={}, severity={}",
+            courtId, userId, request.getSeverity());
 
         request.setCourtId(courtId);
 
         CourtIssueResponseDto issue = issueService.createIssue(request, userId);
+        log.info("Court issue created successfully: issueId={}, courtId={}", issue.getId(), courtId);
         return ResponseEntity.status(HttpStatus.CREATED).body(issue);
     }
 
@@ -73,7 +79,9 @@ public class CourtIssueController {
             @ApiResponse(responseCode = "404", description = "Court not found")
     })
     public ResponseEntity<List<CourtIssueResponseDto>> getCourtIssues(@PathVariable UUID courtId) {
+        log.info("Get court issues request received: courtId={}", courtId);
         List<CourtIssueResponseDto> issues = issueService.getIssuesByCourtId(courtId);
+        log.info("Court issues returned: courtId={}, count={}", courtId, issues.size());
         return ResponseEntity.ok(issues);
     }
 
@@ -84,7 +92,9 @@ public class CourtIssueController {
             @ApiResponse(responseCode = "404", description = "Issue not found")
     })
     public ResponseEntity<CourtIssueResponseDto> getIssueById(@PathVariable UUID issueId) {
+        log.info("Get issue by id request received: issueId={}", issueId);
         CourtIssueResponseDto issue = issueService.getIssueById(issueId);
+        log.info("Issue returned successfully: issueId={}", issueId);
         return ResponseEntity.ok(issue);
     }
 
@@ -98,7 +108,9 @@ public class CourtIssueController {
     @PreAuthorize("hasAuthority('ADMIN')")
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<List<CourtIssueResponseDto>> getAllPendingIssues() {
+        log.info("Get all pending issues request received");
         List<CourtIssueResponseDto> issues = issueService.getAllPendingIssues();
+        log.info("Pending issues returned: count={}", issues.size());
         return ResponseEntity.ok(issues);
     }
 
@@ -117,7 +129,9 @@ public class CourtIssueController {
             @PathVariable UUID issueId,
             @Valid @RequestBody IssueStatusUpdateDto statusUpdate) {
 
+        log.info("Update issue status request received: issueId={}, status={}", issueId, statusUpdate.getStatus());
         CourtIssueResponseDto updatedIssue = issueService.updateIssueStatus(issueId, statusUpdate);
+        log.info("Issue status updated successfully: issueId={}, status={}", issueId, updatedIssue.getStatus());
         return ResponseEntity.ok(updatedIssue);
     }
 

@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -23,6 +24,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/courts")
 @Tag(name = "Courts", description = "Court management endpoints. Creation and updates are ADMIN-only.")
@@ -40,6 +42,7 @@ public class CourtController {
             @ApiResponse(responseCode = "200", description = "List of sport types returned")
     })
     public ResponseEntity<List<SportType>> getSportTypes() {
+        log.info("Get sport types request received");
         return ResponseEntity.ok(Arrays.asList(SportType.values()));
     }
     @PostMapping
@@ -52,7 +55,10 @@ public class CourtController {
     })
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<CourtResponseDto> createCourt(@Valid @RequestBody CourtRequestDto request) {
+        log.info("Create court request received: name={}, sportType={}, surfaceType={}",
+                request.getName(), request.getSportType(), request.getSurfaceType());
         CourtResponseDto court = courtService.createCourt(request);
+        log.info("Court created successfully: courtId={}", court.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(court);
     }
 
@@ -65,7 +71,9 @@ public class CourtController {
             @RequestParam(required = false) SportType sportType,
             @RequestParam(required = false) SurfaceType surfaceType,
             @RequestParam(required = false) CourtStatus status) {
+        log.info("List courts request received: sportType={}, surfaceType={}, status={}", sportType, surfaceType, status);
         List<CourtResponseDto> courts = courtService.listCourts(sportType, surfaceType, status);
+        log.info("Courts listed successfully: count={}", courts.size());
         return ResponseEntity.ok(courts);
     }
 
@@ -76,7 +84,9 @@ public class CourtController {
             @ApiResponse(responseCode = "404", description = "Court not found")
     })
     public ResponseEntity<CourtResponseDto> getCourt(@PathVariable UUID id) {
+        log.info("Get court request received: courtId={}", id);
         CourtResponseDto court = courtService.getCourt(id);
+        log.info("Court returned successfully: courtId={}", id);
         return ResponseEntity.ok(court);
     }
 
@@ -92,7 +102,9 @@ public class CourtController {
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<CourtResponseDto> updateStatus(@PathVariable UUID id,
                                                          @Valid @RequestBody CourtStatusUpdateDto request) {
+        log.info("Update court status request received: courtId={}, status={}", id, request.getStatus());
         CourtResponseDto court = courtService.updateStatus(id, request);
+        log.info("Court status updated successfully: courtId={}, status={}", id, court.getStatus());
         return ResponseEntity.ok(court);
     }
 
@@ -108,7 +120,9 @@ public class CourtController {
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<CourtScheduleResponseDto> upsertSchedule(@PathVariable UUID courtId,
                                                                     @Valid @RequestBody CourtScheduleRequestDto request) {
+        log.info("Upsert court schedule request received: courtId={}, dayOfWeek={}", courtId, request.getDayOfWeek());
         CourtScheduleResponseDto schedule = courtService.upsertSchedule(courtId, request);
+        log.info("Court schedule saved successfully: courtId={}, scheduleId={}", courtId, schedule.getId());
         return ResponseEntity.ok(schedule);
     }
 
@@ -118,7 +132,9 @@ public class CourtController {
             @ApiResponse(responseCode = "200", description = "All court issues returned")
     })
     public ResponseEntity<List<com.courthub.common.dto.analytics.CourtIssueInternalDTO>> getAllCourtIssues() {
+        log.info("Get all court issues (internal) request received");
         List<com.courthub.common.dto.analytics.CourtIssueInternalDTO> issues = courtService.getAllCourtIssuesForAnalytics();
+        log.info("All court issues returned (internal): count={}", issues.size());
         return ResponseEntity.ok(issues);
     }
 }

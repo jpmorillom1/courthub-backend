@@ -6,8 +6,7 @@ import com.courthub.court.domain.CourtStatus;
 import com.courthub.court.event.CourtEventProducer;
 import com.courthub.court.repository.CourtRepository;
 import com.courthub.court.repository.CourtScheduleRepository;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,10 +18,9 @@ import java.time.temporal.TemporalAdjusters;
 import java.util.ArrayList;
 import java.util.List;
 
+@Slf4j
 @Service
 public class WeeklySchedulerService {
-
-    private static final Logger log = LoggerFactory.getLogger(WeeklySchedulerService.class);
 
     private final CourtRepository courtRepository;
     private final CourtScheduleRepository courtScheduleRepository;
@@ -43,6 +41,7 @@ public class WeeklySchedulerService {
  //@Scheduled(cron = "0 37 3 * * *")
     @Transactional
     public void createWeeklySchedules() {
+        long start = System.currentTimeMillis();
         log.info("Starting weekly schedule creation job");
         try {
             List<Court> activeCourts = courtRepository.findByFilters(null, null, CourtStatus.ACTIVE);
@@ -69,8 +68,8 @@ public class WeeklySchedulerService {
                     courtEventProducer.sendCourtScheduleUpdated(court, schedule);
                 }
             }
-
-            log.info("Successfully created {} new court schedules", totalSchedulesCreated);
+            long durationMs = System.currentTimeMillis() - start;
+            log.info("Weekly schedule creation completed: created={}, durationMs={}", totalSchedulesCreated, durationMs);
         } catch (Exception e) {
             log.error("Error during weekly schedule creation", e);
             throw e;
@@ -109,6 +108,7 @@ public class WeeklySchedulerService {
 
     @Transactional
     public void createSchedulesForSpecificWeek(LocalDate weekStart) {
+        long start = System.currentTimeMillis();
         log.info("Manually creating schedules for week starting on {}", weekStart);
 
         List<Court> activeCourts = courtRepository.findByFilters(null, null, CourtStatus.ACTIVE);
@@ -123,7 +123,7 @@ public class WeeklySchedulerService {
                 courtEventProducer.sendCourtScheduleUpdated(court, schedule);
             }
         }
-
-        log.info("Completed manual schedule creation: {} schedules created", totalSchedulesCreated);
+        long durationMs = System.currentTimeMillis() - start;
+        log.info("Manual schedule creation completed: created={}, durationMs={}", totalSchedulesCreated, durationMs);
     }
 }

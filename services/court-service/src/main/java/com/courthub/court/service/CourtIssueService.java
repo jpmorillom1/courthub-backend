@@ -9,6 +9,7 @@ import com.courthub.court.dto.CourtIssueResponseDto;
 import com.courthub.court.dto.IssueStatusUpdateDto;
 import com.courthub.court.repository.CourtIssueRepository;
 import com.courthub.court.repository.CourtRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -19,6 +20,7 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class CourtIssueService {
 
@@ -33,6 +35,8 @@ public class CourtIssueService {
 
     @Transactional
     public CourtIssueResponseDto createIssue(CourtIssueRequestDto request, UUID reporterId) {
+        log.info("Creating court issue: courtId={}, reporterId={}, severity={}",
+                request.getCourtId(), reporterId, request.getSeverity());
         // Verify that the court exists
         if (!courtRepository.existsById(request.getCourtId())) {
             throw new NotFoundException("Court not found with id: " + request.getCourtId());
@@ -47,11 +51,13 @@ public class CourtIssueService {
         // Status will be set to REPORTED by @PrePersist
 
         CourtIssue savedIssue = issueRepository.save(issue);
+        log.info("Court issue created successfully: issueId={}", savedIssue.getId());
         return toResponseDto(savedIssue);
     }
 
 
     public List<CourtIssueResponseDto> getIssuesByCourtId(UUID courtId) {
+        log.debug("Fetching issues for courtId={}", courtId);
         // Verify that the court exists
         if (!courtRepository.existsById(courtId)) {
             throw new NotFoundException("Court not found with id: " + courtId);
@@ -63,6 +69,7 @@ public class CourtIssueService {
     }
 
     public List<CourtIssueResponseDto> getAllPendingIssues() {
+        log.debug("Fetching all pending issues");
         return issueRepository.findAllPendingIssues(IssueStatus.CLOSED).stream()
                 .map(this::toResponseDto)
                 .collect(Collectors.toList());
@@ -70,6 +77,7 @@ public class CourtIssueService {
 
 
     public CourtIssueResponseDto getIssueById(UUID issueId) {
+        log.debug("Fetching issue by id={}", issueId);
         CourtIssue issue = issueRepository.findById(issueId)
                 .orElseThrow(() -> new NotFoundException("Issue not found with id: " + issueId));
         return toResponseDto(issue);
@@ -78,6 +86,7 @@ public class CourtIssueService {
 
     @Transactional
     public CourtIssueResponseDto updateIssueStatus(UUID issueId, IssueStatusUpdateDto statusUpdate) {
+        log.info("Updating issue status: issueId={}, status={}", issueId, statusUpdate.getStatus());
         CourtIssue issue = issueRepository.findById(issueId)
                 .orElseThrow(() -> new NotFoundException("Issue not found with id: " + issueId));
 
@@ -90,6 +99,7 @@ public class CourtIssueService {
         issue.setUpdatedAt(Instant.now());
 
         CourtIssue updatedIssue = issueRepository.save(issue);
+        log.info("Issue status updated successfully: issueId={}, status={}", issueId, updatedIssue.getStatus());
         return toResponseDto(updatedIssue);
     }
 
@@ -120,6 +130,7 @@ public class CourtIssueService {
     }
 
     public List<com.courthub.common.dto.analytics.CourtIssueInternalDTO> getAllCourtIssuesForAnalytics() {
+        log.debug("Fetching court issues for analytics");
         return issueRepository.findAll().stream()
             .map(issue -> new com.courthub.common.dto.analytics.CourtIssueInternalDTO(
                 issue.getId().toString(),

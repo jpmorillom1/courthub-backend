@@ -15,6 +15,7 @@ import com.courthub.court.dto.CourtStatusUpdateDto;
 import com.courthub.court.event.CourtEventProducer;
 import com.courthub.court.repository.CourtRepository;
 import com.courthub.court.repository.CourtScheduleRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
@@ -27,6 +28,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class CourtService {
 
@@ -48,6 +50,8 @@ public class CourtService {
     @Transactional
     @CacheEvict(value = "courts", allEntries = true)
     public CourtResponseDto createCourt(CourtRequestDto request) {
+        log.info("Creating court: name={}, sportType={}, surfaceType={}",
+            request.getName(), request.getSportType(), request.getSurfaceType());
         validateCapacity(request.getCapacity());
 
         Court court = new Court();
@@ -62,11 +66,14 @@ public class CourtService {
         Court savedCourt = courtRepository.save(court);
         eventProducer.sendCourtCreated(savedCourt);
 
+        log.info("Court created successfully: courtId={}", savedCourt.getId());
+
         return toCourtResponse(savedCourt, Collections.emptyList());
     }
 
     @Cacheable(value = "courts", key = "T(String).format('list-%s-%s-%s', #sportType, #surfaceType, #status)")
     public List<CourtResponseDto> listCourts(SportType sportType, SurfaceType surfaceType, CourtStatus status) {
+        log.debug("Listing courts: sportType={}, surfaceType={}, status={}", sportType, surfaceType, status);
         List<Court> courts = courtRepository.findByFilters(sportType, surfaceType, status);
         if (courts.isEmpty()) {
             return Collections.emptyList();
@@ -86,6 +93,7 @@ public class CourtService {
 
     @Cacheable(value = "courts", key = "#id")
     public CourtResponseDto getCourt(UUID id) {
+        log.debug("Fetching court: courtId={}", id);
         Court court = findCourtOrThrow(id);
         List<CourtSchedule> schedules = scheduleRepository.findByCourtId(id);
         return toCourtResponse(court, schedules);
@@ -94,6 +102,7 @@ public class CourtService {
     @Transactional
     @CacheEvict(value = "courts", allEntries = true)
     public CourtResponseDto updateStatus(UUID id, CourtStatusUpdateDto request) {
+        log.info("Updating court status: courtId={}, status={}", id, request.getStatus());
         if (request.getStatus() == null) {
             throw new BusinessException("Status is required");
         }
@@ -105,6 +114,8 @@ public class CourtService {
         eventProducer.sendCourtStatusChanged(saved);
         eventProducer.sendCourtUpdated(saved);
 
+        log.info("Court status updated successfully: courtId={}, status={}", id, saved.getStatus());
+
         List<CourtSchedule> schedules = scheduleRepository.findByCourtId(id);
         return toCourtResponse(saved, schedules);
     }
@@ -112,6 +123,7 @@ public class CourtService {
     @Transactional
     @CacheEvict(value = "courts", allEntries = true)
     public CourtScheduleResponseDto upsertSchedule(UUID courtId, CourtScheduleRequestDto request) {
+        log.info("Upserting schedule: courtId={}, dayOfWeek={}", courtId, request.getDayOfWeek());
         Court court = findCourtOrThrow(courtId);
         validateScheduleTimes(request.getOpenTime(), request.getCloseTime());
 
@@ -126,6 +138,8 @@ public class CourtService {
         CourtSchedule saved = scheduleRepository.save(schedule);
         eventProducer.sendCourtScheduleUpdated(court, saved);
         eventProducer.sendCourtUpdated(court);
+
+        log.info("Court schedule saved successfully: courtId={}, scheduleId={}", courtId, saved.getId());
 
         return toScheduleResponse(saved);
     }
@@ -180,6 +194,7 @@ public class CourtService {
     }
 
     public List<com.courthub.common.dto.analytics.CourtIssueInternalDTO> getAllCourtIssuesForAnalytics() {
+        log.debug("Fetching court issues for analytics");
         return courtIssueService.getAllCourtIssuesForAnalytics();
     }
 }
