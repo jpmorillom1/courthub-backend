@@ -12,6 +12,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -23,6 +24,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/users")
 @Tag(name = "Users", description = "Endpoints for user management")
@@ -42,7 +44,9 @@ public class UserController {
             @ApiResponse(responseCode = "400", description = "Invalid data or email already exists")
     })
     public ResponseEntity<UserDto> createUser(@Valid @RequestBody CreateUserDto createUserDto) {
+        log.info("Create user request received");
         UserDto user = userService.createUser(createUserDto);
+        log.info("User created successfully: userId={}", user.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
 
@@ -55,7 +59,9 @@ public class UserController {
     })
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<UserDto> getUserById(@PathVariable UUID id) {
+        log.info("Get user by id request received: userId={}", id);
         UserDto user = userService.getUserById(id);
+        log.info("User returned successfully: userId={}", id);
         return ResponseEntity.ok(user);
     }
 
@@ -69,6 +75,7 @@ public class UserController {
     })
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<UserDto> getCurrentUser() {
+        log.info("Get current user request received");
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         if (authentication == null || !(authentication instanceof JwtAuthenticationToken)) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
@@ -78,6 +85,7 @@ public class UserController {
         UUID userId = jwtAuth.getUserId();
         
         UserDto user = userService.getUserById(userId);
+        log.info("Current user returned successfully: userId={}", userId);
         return ResponseEntity.ok(user);
     }
 
@@ -90,7 +98,9 @@ public class UserController {
     })
     @SecurityRequirement(name = "Bearer Authentication")
     public ResponseEntity<UserDto> getUserByEmail(@PathVariable String email) {
+        log.info("Get user by email request received");
         UserDto user = userService.getUserByEmail(email);
+        log.info("User returned successfully by email");
         return ResponseEntity.ok(user);
     }
 
@@ -105,7 +115,9 @@ public class UserController {
     public ResponseEntity<UserDto> updateUser(
             @PathVariable UUID id,
             @Valid @RequestBody UpdateUserDto updateUserDto) {
+        log.info("Update user request received: userId={}", id);
         UserDto user = userService.updateUser(id, updateUserDto);
+        log.info("User updated successfully: userId={}", id);
         return ResponseEntity.ok(user);
     }
     @PostMapping("/validate-credentials")
@@ -116,9 +128,11 @@ public class UserController {
     })
     public ResponseEntity<Map<String, Object>> validateCredentials(
             @Valid @RequestBody ValidateCredentialsDto request) {
+        log.info("Validate credentials request received");
         boolean isValid = userService.validateCredentials(request.getEmail(), request.getPassword());
         Map<String, Object> response = new HashMap<>();
         response.put("valid", isValid);
+        log.info("Validate credentials completed");
         return ResponseEntity.ok(response);
     }
 
@@ -128,7 +142,9 @@ public class UserController {
             @ApiResponse(responseCode = "200", description = "All users returned")
     })
     public ResponseEntity<java.util.List<com.courthub.common.dto.analytics.UserInternalDTO>> getAllUsers() {
+        log.info("Get all users (internal) request received");
         java.util.List<com.courthub.common.dto.analytics.UserInternalDTO> users = userService.getAllUsersForAnalytics();
+        log.info("All users returned (internal): count={}", users.size());
         return ResponseEntity.ok(users);
     }
 }

@@ -8,6 +8,7 @@ import com.courthub.common.exception.NotFoundException;
 import com.courthub.user.domain.Role;
 import com.courthub.user.entity.User;
 import com.courthub.user.repository.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -17,6 +18,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class UserService {
 
@@ -31,6 +33,7 @@ public class UserService {
 
     @Transactional
     public UserDto createUser(CreateUserDto createUserDto) {
+        log.info("Creating user");
         if (userRepository.existsByEmail(createUserDto.getEmail())) {
             throw new BusinessException("User with email " + createUserDto.getEmail() + " already exists");
         }
@@ -61,22 +64,26 @@ public class UserService {
         user.setRoles(roles);
 
         User savedUser = userRepository.save(user);
+        log.info("User created successfully: userId={}", savedUser.getId());
         return toDto(savedUser);
     }
 
     public UserDto getUserById(UUID id) {
+        log.debug("Fetching user by id={}", id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User", id));
         return toDto(user);
     }
 
     public UserDto getUserByEmail(String email) {
+        log.debug("Fetching user by email");
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new NotFoundException("User with email " + email + " not found"));
         return toDto(user);
     }
 
     public boolean validateCredentials(String email, String password) {
+        log.debug("Validating credentials");
         User user = userRepository.findByEmail(email)
                 .orElse(null);
         
@@ -89,6 +96,7 @@ public class UserService {
 
     @Transactional
     public UserDto updateUser(UUID id, UpdateUserDto updateUserDto) {
+        log.info("Updating user: userId={}", id);
         User user = userRepository.findById(id)
                 .orElseThrow(() -> new NotFoundException("User", id));
 
@@ -121,6 +129,7 @@ public class UserService {
         }
 
         User updatedUser = userRepository.save(user);
+        log.info("User updated successfully: userId={}", id);
         return toDto(updatedUser);
     }
 
@@ -139,6 +148,7 @@ public class UserService {
     }
 
     public java.util.List<com.courthub.common.dto.analytics.UserInternalDTO> getAllUsersForAnalytics() {
+        log.debug("Fetching all users for analytics");
         return userRepository.findAll().stream()
             .map(user -> new com.courthub.common.dto.analytics.UserInternalDTO(
                 user.getId().toString(),
