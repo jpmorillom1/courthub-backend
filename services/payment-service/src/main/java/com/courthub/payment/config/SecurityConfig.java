@@ -1,6 +1,7 @@
 package com.courthub.payment.config;
 
 import com.courthub.common.security.JwtTokenProvider;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -58,6 +59,7 @@ public class SecurityConfig {
         return new JwtAuthenticationFilter(jwtTokenProvider);
     }
 
+    @Slf4j
     public static class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         private final JwtTokenProvider jwtTokenProvider;
@@ -71,12 +73,16 @@ public class SecurityConfig {
                 throws ServletException, IOException {
 
             String token = extractToken(request);
-            System.out.println("DEBUG: Token extraído: " + (token != null ? "SÍ" : "NO"));
+            if (token != null) {
+                log.debug("JWT token detected in request");
+            } else {
+                log.debug("No JWT token found in request");
+            }
 
             if (token != null && !jwtTokenProvider.isRefreshToken(token)) {
                 try {
                     UUID userId = jwtTokenProvider.getUserIdFromToken(token);
-                    System.out.println("DEBUG: UserId recuperado del token: " + userId);
+                    log.debug("JWT token parsed successfully: userId={}", userId);
                     List<String> roles = jwtTokenProvider.getRolesFromToken(token);
 
                     List<SimpleGrantedAuthority> authorities = roles.stream()
@@ -87,7 +93,7 @@ public class SecurityConfig {
                     SecurityContextHolder.getContext().setAuthentication(authentication);
 
                 } catch (Exception e) {
-                    System.err.println("DEBUG: Error crítico validando: " + e.getMessage());
+                    log.warn("JWT token validation failed", e);
                     SecurityContextHolder.clearContext();
                 }
             }

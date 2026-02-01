@@ -8,18 +8,17 @@ import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
 import com.stripe.model.checkout.Session;
 import com.stripe.net.Webhook;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/webhook")
 public class WebhookController {
 
-    private static final Logger logger = LoggerFactory.getLogger(WebhookController.class);
 
     private final PaymentService paymentService;
 
@@ -40,11 +39,11 @@ public class WebhookController {
         try {
             event = Webhook.constructEvent(payload, sigHeader, webhookSecret);
         } catch (SignatureVerificationException e) {
-            logger.error("Invalid signature", e);
+            log.error("Invalid signature", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Invalid signature");
         }
 
-        logger.info("Received Stripe webhook event: {}", event.getType());
+        log.info("Received Stripe webhook event: {}", event.getType());
 
         switch (event.getType()) {
             case "checkout.session.completed":
@@ -54,7 +53,7 @@ public class WebhookController {
                 handleCheckoutSessionExpired(event);
                 break;
             default:
-                logger.info("Unhandled event type: {}", event.getType());
+                log.info("Unhandled event type: {}", event.getType());
         }
 
         return ResponseEntity.ok("Success");
@@ -68,6 +67,7 @@ public class WebhookController {
                     try {
                         return (Session) dataObjectDeserializer.deserializeUnsafe();
                     } catch (EventDataObjectDeserializationException e) {
+                        log.error("Deserialization error", e);
                         throw new RuntimeException(e);
                     }
                 });
@@ -76,12 +76,10 @@ public class WebhookController {
             try {
                 paymentService.handleSuccessfulPayment(session.getId());
             } catch (StripeException e) {
-                logger.error("Error processing pay: {}", e.getMessage());
+                log.error("Error processing pay: {}", e.getMessage());
             }
         }
     }
-
-
 
     private void handleCheckoutSessionExpired(Event event) {
         EventDataObjectDeserializer dataObjectDeserializer = event.getDataObjectDeserializer();
@@ -91,13 +89,14 @@ public class WebhookController {
                     try {
                         return (Session) dataObjectDeserializer.deserializeUnsafe();
                     } catch (EventDataObjectDeserializationException e) {
+                        log.error("Deserialization error", e);
                         throw new RuntimeException(e);
                     }
                 });
 
         if (session != null) {
             paymentService.handleExpiredPayment(session.getId());
-            logger.info("Successfully processed checkout.session.expired for session: {}", session.getId());
+            log.info("Successfully processed checkout.session.expired for session: {}", session.getId());
         }
     }
 }

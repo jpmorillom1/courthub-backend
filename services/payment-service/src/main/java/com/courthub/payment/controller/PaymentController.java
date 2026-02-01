@@ -5,6 +5,7 @@ import com.courthub.payment.config.JwtAuthenticationToken;
 import com.courthub.payment.dto.PaymentResponse;
 import com.courthub.payment.service.PaymentService;
 import com.stripe.exception.StripeException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/payments")
 public class PaymentController {
@@ -40,7 +42,10 @@ public class PaymentController {
         UUID userId = auth.getUserId();
 
         UUID bookingId = UUID.fromString(request.get("bookingId"));
+        log.info("Create checkout request received: userId={}, bookingId={}", userId, bookingId);
         PaymentResponse response = paymentService.createCheckoutSession(bookingId, userId);
+
+        log.info("Checkout session created successfully: bookingId={}", bookingId);
 
         return ResponseEntity.ok(response);
     }
@@ -50,13 +55,17 @@ public class PaymentController {
     public ResponseEntity<List<PaymentResponse>> getUserPayments(
             @AuthenticationPrincipal JwtAuthenticationToken auth
     ) {
+        log.info("Get user payments request received: userId={}", auth.getUserId());
         List<PaymentResponse> payments = paymentService.getUserPayments(auth.getUserId());
+        log.info("User payments returned: userId={}, count={}", auth.getUserId(), payments.size());
         return ResponseEntity.ok(payments);
     }
 
     @GetMapping("/booking/{bookingId}")
     public ResponseEntity<PaymentResponse> getPaymentByBooking(@PathVariable UUID bookingId) {
+        log.info("Get payment by booking request received: bookingId={}", bookingId);
         PaymentResponse payment = paymentService.getPaymentByBookingId(bookingId);
+        log.info("Payment returned successfully: bookingId={}", bookingId);
         return ResponseEntity.ok(payment);
     }
 }

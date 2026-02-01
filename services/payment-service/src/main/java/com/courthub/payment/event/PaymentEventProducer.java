@@ -2,14 +2,12 @@ package com.courthub.payment.event;
 
 import com.courthub.common.dto.PaymentEventPayload;
 import com.courthub.payment.domain.Payment;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Component;
 @Component
+@Slf4j
 public class PaymentEventProducer {
-
-    private static final Logger logger = LoggerFactory.getLogger(PaymentEventProducer.class);
 
     private static final String PAYMENT_CONFIRMED_TOPIC = "payment.confirmed";
     private static final String PAYMENT_FAILED_TOPIC = "payment.failed";
@@ -37,7 +35,7 @@ public class PaymentEventProducer {
                 payload
         );
 
-        logger.info("Published payment.confirmed event for booking: {}", payment.getBookingId());
+        log.info("Published payment.confirmed event: bookingId={}", payment.getBookingId());
     }
 
     public void sendPaymentFailed(Payment payment) {
@@ -56,7 +54,7 @@ public class PaymentEventProducer {
                 payload
         );
 
-        logger.info("Published payment.failed event for booking: {}", payment.getBookingId());
+        log.info("Published payment.failed event: bookingId={}", payment.getBookingId());
     }
 
     public void sendPaymentExpired(Payment payment) {
@@ -75,6 +73,6 @@ public class PaymentEventProducer {
                 payload
         );
 
-        logger.info("Published payment.expired event for booking: {}", payment.getBookingId());
+        log.info("Published payment.expired event: bookingId={}", payment.getBookingId());
     }
 }

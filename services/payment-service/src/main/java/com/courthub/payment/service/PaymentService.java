@@ -8,8 +8,7 @@ import com.courthub.payment.repository.PaymentRepository;
 import com.stripe.exception.StripeException;
 import com.stripe.model.checkout.Session;
 import com.stripe.param.checkout.SessionCreateParams;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,10 +18,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 public class PaymentService {
-
-    private static final Logger logger = LoggerFactory.getLogger(PaymentService.class);
 
     private final PaymentRepository paymentRepository;
     private final PaymentEventProducer paymentEventProducer;
@@ -43,7 +41,9 @@ public class PaymentService {
 
     @Transactional
     public PaymentResponse createCheckoutSession(UUID bookingId, UUID userId) throws StripeException {
+        log.info("Creating checkout session: bookingId={}, userId={}", bookingId, userId);
         if (paymentRepository.findByBookingId(bookingId).isPresent()) {
+            log.warn("Checkout session rejected: payment already exists for bookingId={}", bookingId);
             throw new IllegalStateException("Payment already exists for booking: " + bookingId);
         }
 
@@ -84,7 +84,7 @@ public class PaymentService {
         payment.setStatus(PaymentStatus.PENDING);
 
         Payment saved = paymentRepository.save(payment);
-        logger.info("Payment created with session ID: {} for booking: {}", session.getId(), bookingId);
+        log.info("Payment created successfully: paymentId={}, bookingId={}", saved.getId(), bookingId);
 
         return new PaymentResponse(
                 saved.getId(),
@@ -100,6 +100,7 @@ public class PaymentService {
 
     @Transactional
     public void handleSuccessfulPayment(String sessionId) throws StripeException {
+        log.info("Handling successful payment: sessionId={}", sessionId);
         Session session = Session.retrieve(sessionId);
         
         Payment payment = paymentRepository.findByStripeSessionId(sessionId)
@@ -109,17 +110,18 @@ public class PaymentService {
         payment.setStripePaymentIntentId(session.getPaymentIntent());
         paymentRepository.save(payment);
 
-        logger.info("Payment completed for booking: {}", payment.getBookingId());
+        log.info("Payment completed: bookingId={}", payment.getBookingId());
 
         paymentEventProducer.sendPaymentConfirmed(payment);
     }
 
     @Transactional
     public void handleFailedPayment(String sessionId) {
+        log.info("Handling failed payment: sessionId={}", sessionId);
         paymentRepository.findByStripeSessionId(sessionId).ifPresent(payment -> {
             payment.setStatus(PaymentStatus.FAILED);
             paymentRepository.save(payment);
-            logger.warn("Payment failed for booking: {}", payment.getBookingId());
+            log.warn("Payment failed: bookingId={}", payment.getBookingId());
             
             paymentEventProducer.sendPaymentFailed(payment);
         });
@@ -127,22 +129,25 @@ public class PaymentService {
 
     @Transactional
     public void handleExpiredPayment(String sessionId) {
+        log.info("Handling expired payment: sessionId={}", sessionId);
         paymentRepository.findByStripeSessionId(sessionId).ifPresent(payment -> {
             payment.setStatus(PaymentStatus.EXPIRED);
             paymentRepository.save(payment);
-            logger.warn("Payment expired for booking: {}", payment.getBookingId());
+            log.warn("Payment expired: bookingId={}", payment.getBookingId());
             
             paymentEventProducer.sendPaymentExpired(payment);
         });
     }
 
     public List<PaymentResponse> getUserPayments(UUID userId) {
+        log.debug("Fetching payments for userId={}", userId);
         return paymentRepository.findByUserId(userId).stream()
                 .map(this::toPaymentResponse)
                 .collect(Collectors.toList());
     }
 
     public PaymentResponse getPaymentByBookingId(UUID bookingId) {
+        log.debug("Fetching payment by bookingId={}", bookingId);
         Payment payment = paymentRepository.findByBookingId(bookingId)
                 .orElseThrow(() -> new IllegalStateException("Payment not found for booking: " + bookingId));
         return toPaymentResponse(payment);
