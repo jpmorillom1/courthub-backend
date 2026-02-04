@@ -9,7 +9,7 @@ on:
       - "build.gradle"
 
 jobs:
-  # 1. Detect changed services
+  # Detect which services were modified in the commit
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
@@ -20,6 +20,7 @@ jobs:
         id: filter
         with:
           filters: |
+            # Shared trigger: service-specific changes or shared libraries
             user-service: &lib_trigger
               - 'services/user-service/**'
               - 'libs/**'
@@ -32,9 +33,10 @@ jobs:
             api-gateway: *lib_trigger
             analytics-service: *lib_trigger
 
-  # 2. Selective Build, Test and Deploy
+  # Build, test and deploy only the affected services
   build-and-deploy:
     needs: detect-changes
+    # Skip job if no services were affected
     if: ${{ needs.detect-changes.outputs.services != '[]' }}
     runs-on: ubuntu-latest
     strategy:
@@ -56,50 +58,62 @@ jobs:
       - name: Make gradlew executable
         run: chmod +x ./gradlew
 
-      # Run unit tests only for services that define them
+      # Run unit tests only for services that have test coverage
       - name: Run Unit Tests
         if: contains(fromJSON('["user-service", "booking-service", "court-service", "notification-service"]'), matrix.service)
         run: ./gradlew :services:${{ matrix.service }}:test
 
+      # Build the service artifact without re-running tests
       - name: Build with Gradle
         run: ./gradlew :services:${{ matrix.service }}:build -x test
 
+      # Authenticate with Docker Hub
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_TOKEN }}
 
+      # Build and publish the Docker image for the service
       - name: Build and Push Docker image
         run: |
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/courthub-${{ matrix.service }}:prod -f services/${{ matrix.service }}/Dockerfile .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/courthub-${{ matrix.service }}:prod
 
-      # 3. Deployment through Bastion Host to Private Network
+      # Deploy service through Bastion Host into the private network
       - name: Deploy via Bastion
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.BASTION_IP }}
           username: ec2-user
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          envs: SSH_PRIVATE_KEY
           script: |
-            # Service-to-private-IP mapping based on segmented infrastructure
+            # Resolve target private IP based on service domain
             if [[ "${{ matrix.service }}" == "user-service" || "${{ matrix.service }}" == "auth-service" ]]; then
-              TARGET_IP="${{ secrets.IDENTITY_STACK_IP }}" #
+              TARGET_IP="${{ secrets.IDENTITY_STACK_IP }}"
             elif [[ "${{ matrix.service }}" == "court-service" || "${{ matrix.service }}" == "booking-service" || "${{ matrix.service }}" == "payment-service" ]]; then
-              TARGET_IP="${{ secrets.CORE_STACK_IP }}" #
+              TARGET_IP="${{ secrets.CORE_STACK_IP }}"
             elif [[ "${{ matrix.service }}" == "notification-service" || "${{ matrix.service }}" == "realtime-adapter-service" || "${{ matrix.service }}" == "analytics-service" ]]; then
-              TARGET_IP="${{ secrets.ASYNC_STACK_IP }}" #
+              TARGET_IP="${{ secrets.ASYNC_STACK_IP }}"
             elif [[ "${{ matrix.service }}" == "api-gateway" ]]; then
+              # Trigger rolling refresh for the Gateway Auto Scaling Group
               echo "Starting ASG refresh for Gateway..."
-              aws autoscaling start-instance-refresh --auto-scaling-group-name courthub-gateway-asg --region us-east-1 #
+              aws autoscaling start-instance-refresh --auto-scaling-group-name courthub-gateway-asg --region us-east-1
               exit 0
             fi
 
-            echo "Updating container on $TARGET_IP"
+            # Load SSH key into agent for internal host connection
+            eval $(ssh-agent -s)
+            echo "$SSH_PRIVATE_KEY" | tr -d '\r' | ssh-add - > /dev/null
+
+            echo "Connecting to private stack at: $TARGET_IP"
             ssh -o StrictHostKeyChecking=no ec2-user@$TARGET_IP << 'EOF'
               cd /opt/courthub
               docker compose pull ${{ matrix.service }}
               docker compose up -d ${{ matrix.service }}
               docker image prune -f
             EOF
+
+            # Clean up SSH agent
+            ssh-add -D
