@@ -41,7 +41,7 @@ public class CourtController {
     @ApiResponse(responseCode = "200", description = "Hello message returned")
     public ResponseEntity<java.util.Map<String, String>> hello() {
         java.util.Map<String, String> response = new java.util.HashMap<>();
-        response.put("message", "Hello World from Court Service!");
+        response.put("message", "Hello World from Court Service");
         response.put("service", "court-service");
         return ResponseEntity.ok(response);
     }
