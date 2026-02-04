@@ -51,9 +51,12 @@ jobs:
           distribution: "temurin"
           cache: "gradle"
 
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
       - name: Run Unit Tests
         if: contains(fromJSON('["user-service", "booking-service", "court-service", "notification-service"]'), matrix.service)
-        run: chmod +x ./gradlew && ./gradlew :services:${{ matrix.service }}:test
+        run: ./gradlew :services:${{ matrix.service }}:test
 
       - name: Build and Push Docker image
         run: |
@@ -62,14 +65,12 @@ jobs:
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/courthub-${{ matrix.service }}:prod -f services/${{ matrix.service }}/Dockerfile .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/courthub-${{ matrix.service }}:prod
 
-      # CONFIGURACIÓN DEL TÚNEL SSH (SOLUCIÓN AL JUMP)
-      - name: Setup SSH Jump Tunnel
+      - name: Setup SSH Jump
         run: |
           mkdir -p ~/.ssh
           echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
           
-          # Crear configuración para el salto automático
           cat >> ~/.ssh/config <<EOF
           Host bastion
             HostName ${{ secrets.BASTION_IP }}
@@ -77,7 +78,7 @@ jobs:
             IdentityFile ~/.ssh/id_rsa
             StrictHostKeyChecking no
 
-          Host internal-*
+          Host private-stack
             User ec2-user
             IdentityFile ~/.ssh/id_rsa
             ProxyJump bastion
@@ -86,7 +87,6 @@ jobs:
 
       - name: Deploy to Private Stack
         run: |
-          # Mapeo de IPs privadas según el servicio
           if [[ "${{ matrix.service }}" == "user-service" || "${{ matrix.service }}" == "auth-service" ]]; then
             TARGET_IP="${{ secrets.IDENTITY_STACK_IP }}"
           elif [[ "${{ matrix.service }}" == "court-service" || "${{ matrix.service }}" == "booking-service" || "${{ matrix.service }}" == "payment-service" ]]; then
@@ -94,13 +94,11 @@ jobs:
           elif [[ "${{ matrix.service }}" == "notification-service" || "${{ matrix.service }}" == "realtime-adapter-service" || "${{ matrix.service }}" == "analytics-service" ]]; then
             TARGET_IP="${{ secrets.ASYNC_STACK_IP }}"
           elif [[ "${{ matrix.service }}" == "api-gateway" ]]; then
-            # Para el Gateway usamos AWS CLI (requiere credenciales de AWS en secrets)
             aws autoscaling start-instance-refresh --auto-scaling-group-name courthub-gateway-asg --region us-east-1
             exit 0
           fi
 
-          # Ejecución directa aprovechando el ProxyJump configurado arriba
-          ssh internal-stack -o "HostName=$TARGET_IP" <<EOF
+          ssh -o "HostName=$TARGET_IP" private-stack <<EOF
             cd /opt/courthub
             docker compose pull ${{ matrix.service }}
             docker compose up -d ${{ matrix.service }}
