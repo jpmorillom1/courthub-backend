@@ -1,4 +1,4 @@
-name: "Backend Selective CD - Bastion Tunnel"
+name: "Backend Selective CD - Bastion & Tests"
 
 on:
   push:
@@ -9,6 +9,7 @@ on:
       - "build.gradle"
 
 jobs:
+  # 1. Identificar qué servicios cambiaron
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
@@ -31,6 +32,7 @@ jobs:
             api-gateway: *lib_trigger
             analytics-service: *lib_trigger
 
+  # 2. Build, Test y Deploy
   build-and-deploy:
     needs: detect-changes
     if: ${{ needs.detect-changes.outputs.services != '[]' }}
@@ -58,49 +60,49 @@ jobs:
         if: contains(fromJSON('["user-service", "booking-service", "court-service", "notification-service"]'), matrix.service)
         run: ./gradlew :services:${{ matrix.service }}:test
 
+      - name: Build with Gradle
+        run: ./gradlew :services:${{ matrix.service }}:build -x test
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
       - name: Build and Push Docker image
         run: |
-          ./gradlew :services:${{ matrix.service }}:build -x test
-          echo "${{ secrets.DOCKERHUB_TOKEN }}" | docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" --password-stdin
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/courthub-${{ matrix.service }}:prod -f services/${{ matrix.service }}/Dockerfile .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/courthub-${{ matrix.service }}:prod
 
-      - name: Setup SSH Jump
-        run: |
-          mkdir -p ~/.ssh
-          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_rsa
-          chmod 600 ~/.ssh/id_rsa
-          
-          cat >> ~/.ssh/config <<EOF
-          Host bastion
-            HostName ${{ secrets.BASTION_IP }}
-            User ec2-user
-            IdentityFile ~/.ssh/id_rsa
-            StrictHostKeyChecking no
-
-          Host private-stack
-            User ec2-user
-            IdentityFile ~/.ssh/id_rsa
-            ProxyJump bastion
-            StrictHostKeyChecking no
-          EOF
-
-      - name: Deploy to Private Stack
-        run: |
-          if [[ "${{ matrix.service }}" == "user-service" || "${{ matrix.service }}" == "auth-service" ]]; then
-            TARGET_IP="${{ secrets.IDENTITY_STACK_IP }}"
-          elif [[ "${{ matrix.service }}" == "court-service" || "${{ matrix.service }}" == "booking-service" || "${{ matrix.service }}" == "payment-service" ]]; then
-            TARGET_IP="${{ secrets.CORE_STACK_IP }}"
-          elif [[ "${{ matrix.service }}" == "notification-service" || "${{ matrix.service }}" == "realtime-adapter-service" || "${{ matrix.service }}" == "analytics-service" ]]; then
-            TARGET_IP="${{ secrets.ASYNC_STACK_IP }}"
-          elif [[ "${{ matrix.service }}" == "api-gateway" ]]; then
-            aws autoscaling start-instance-refresh --auto-scaling-group-name courthub-gateway-asg --region us-east-1
-            exit 0
-          fi
-
-          ssh -o "HostName=$TARGET_IP" private-stack <<EOF
+      # 3. Despliegue para servicios en Red Privada (vía Bastion)
+      - name: Deploy via Bastion Tunnel
+        if: matrix.service != 'api-gateway'
+        uses: appleboy/ssh-action@master
+        with:
+          # Determinamos la IP privada destino según el stack al que pertenece el servicio
+          host: ${{
+            (matrix.service == 'user-service' || matrix.service == 'auth-service') && secrets.IDENTITY_STACK_IP ||
+            (matrix.service == 'court-service' || matrix.service == 'booking-service' || matrix.service == 'payment-service') && secrets.CORE_STACK_IP ||
+            secrets.ASYNC_STACK_IP
+            }}
+          username: ec2-user
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          # Configuración del túnel (Jump Server)
+          proxy_host: ${{ secrets.BASTION_IP }}
+          proxy_username: ec2-user
+          proxy_key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            echo "Conectado a: $(hostname -f) via Bastion"
             cd /opt/courthub
             docker compose pull ${{ matrix.service }}
             docker compose up -d ${{ matrix.service }}
             docker image prune -f
-          EOF
+
+      # 4. Despliegue especial para API Gateway (AWS CLI directo)
+      - name: Refresh API Gateway ASG
+        if: matrix.service == 'api-gateway'
+        run: |
+          aws autoscaling start-instance-refresh --auto-scaling-group-name courthub-gateway-asg --region us-east-1
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
