@@ -36,6 +36,16 @@ public class CourtController {
         this.courtService = courtService;
     }
 
+    @GetMapping("/hello")
+    @Operation(summary = "Hello World", description = "Simple hello world endpoint for service availability check")
+    @ApiResponse(responseCode = "200", description = "Hello message returned")
+    public ResponseEntity<java.util.Map<String, String>> hello() {
+        java.util.Map<String, String> response = new java.util.HashMap<>();
+        response.put("message", "Hello World from Court Service");
+        response.put("service", "court-service");
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/sports")
     @Operation(summary = "Get sport types", description = "Returns a list of all available sport types defined in the system.")
     @ApiResponses(value = {

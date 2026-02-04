@@ -29,6 +29,16 @@ public class AuthController {
         this.authService = authService;
     }
 
+    @GetMapping("/hello")
+    @Operation(summary = "Hello World", description = "Simple hello world endpoint for service availability check")
+    @ApiResponse(responseCode = "200", description = "Hello message returned")
+    public ResponseEntity<java.util.Map<String, String>> hello() {
+        java.util.Map<String, String> response = new java.util.HashMap<>();
+        response.put("message", "Hello World from Auth Service");
+        response.put("service", "auth-service");
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping("/login")
     @Operation(summary = "Login with email and password", description = "Authenticates a user with email and password, returns access token and refresh token")
     @ApiResponses(value = {

@@ -26,6 +26,13 @@ public class PaymentController {
         this.paymentService = paymentService;
     }
 
+    @GetMapping("/hello")
+    public ResponseEntity<java.util.Map<String, String>> hello() {
+        java.util.Map<String, String> response = new java.util.HashMap<>();
+        response.put("message", "Hello World from Payment Service");
+        response.put("service", "payment-service");
+        return ResponseEntity.ok(response);
+    }
 
     @PostMapping("/checkout")
     public ResponseEntity<PaymentResponse> createCheckout(

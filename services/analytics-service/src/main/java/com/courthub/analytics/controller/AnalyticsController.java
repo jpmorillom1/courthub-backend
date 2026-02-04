@@ -30,6 +30,18 @@ public class AnalyticsController {
         this.dataSyncService = dataSyncService;
     }
 
+    @GetMapping("/hello")
+    @Operation(summary = "Hello World", description = "Simple hello world endpoint for service availability check")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Hello message returned")
+    })
+    public ResponseEntity<java.util.Map<String, String>> hello() {
+        java.util.Map<String, String> response = new java.util.HashMap<>();
+        response.put("message", "Hello World from Analytics Service");
+        response.put("service", "analytics-service");
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/dashboard")
     @Operation(summary = "Get analytics dashboard", description = "Returns dashboard metrics including KPIs, heatmap, faculty usage, and student rankings. Requires ADMIN authority.")
     @ApiResponses(value = {

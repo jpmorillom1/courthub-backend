@@ -28,6 +28,16 @@ public class CombinedReportController {
     private final NotificationRepository notificationRepository;
     private final UserServiceClient userServiceClient;
 
+    @GetMapping("/hello")
+    @Operation(summary = "Hello World", description = "Simple hello world endpoint for service availability check")
+    @ApiResponse(responseCode = "200", description = "Hello message returned")
+    public ResponseEntity<java.util.Map<String, String>> hello() {
+        java.util.Map<String, String> response = new java.util.HashMap<>();
+        response.put("message", "Hello World from Notification Service");
+        response.put("service", "notification-service");
+        return ResponseEntity.ok(response);
+    }
+
     @GetMapping("/report/{userId}")
     @Operation(
             summary = "Get combined report (PostgreSQL + MongoDB)",

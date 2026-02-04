@@ -34,6 +34,18 @@ public class BookingController {
         this.bookingService = bookingService;
     }
 
+    @GetMapping("/hello")
+    @Operation(summary = "Hello World", description = "Simple hello world endpoint for service availability check")
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "Hello message returned")
+    })
+    public ResponseEntity<java.util.Map<String, String>> hello() {
+        java.util.Map<String, String> response = new java.util.HashMap<>();
+        response.put("message", "Hello World from Booking Service");
+        response.put("service", "booking-service");
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping
     @Operation(summary = "Create booking", description = "Creates a new booking for an available time slot")
     @ApiResponses(value = {

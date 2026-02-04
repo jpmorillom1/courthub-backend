@@ -37,6 +37,16 @@ public class UserController {
         this.userService = userService;
     }
 
+    @GetMapping("/hello")
+    @Operation(summary = "Hello World", description = "Simple hello world endpoint for service availability check")
+    @ApiResponse(responseCode = "200", description = "Hello message returned")
+    public ResponseEntity<Map<String, String>> hello() {
+        Map<String, String> response = new HashMap<>();
+        response.put("message", "Hello World from User Service");
+        response.put("service", "user-service");
+        return ResponseEntity.ok(response);
+    }
+
     @PostMapping
     @Operation(summary = "Create user (Registration)", description = "Creates a new user in the system. This is the public registration endpoint.")
     @ApiResponses(value = {
