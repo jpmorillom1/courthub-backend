@@ -2,7 +2,7 @@ name: Backend Selective CD - Bastion & Tests
 
 on:
   push:
-    branches: ["develop"]
+    branches: ["main"]
     paths:
       - "services/**"
       - "libs/**"
@@ -90,21 +90,10 @@ jobs:
           proxy_username: ec2-user
           proxy_key: ${{ secrets.SSH_PRIVATE_KEY }}
           script: |
-            echo "Conectado a: $(hostname -f) via Bastion"
             cd /opt/courthub
-            
-            # Usamos la ruta absoluta al binario que instalaste en User Data
             COMPOSE_BIN="/usr/local/bin/docker-compose"
-            
-            echo "Ejecutando despliegue para: ${{ matrix.service }}"
-            
-            # Pull de la nueva imagen
             $COMPOSE_BIN pull ${{ matrix.service }}
-            
-            # Reiniciar solo el servicio actualizado
             $COMPOSE_BIN up -d ${{ matrix.service }}
-            
-            # Limpieza de imágenes antiguas para no llenar el disco (t3.medium tiene límites)
             docker image prune -f
 
       - name: Refresh API Gateway ASG
