@@ -1,0 +1,50 @@
+spring:
+  application:
+    name: REALTIME-ADAPTER-SERVICE
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:kafka:9092}
+    consumer:
+      group-id: realtime-adapter-group
+      auto-offset-reset: earliest
+      enable-auto-commit: true
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+    properties:
+      spring.json.trusted.packages: com.courthub.*
+
+server:
+  port: 8084
+  servlet:
+    context-path: /api/realtime
+
+firebase:
+  database-url: ${FIREBASE_DATABASE_URL}
+  credentials-path: ${FIREBASE_CREDENTIALS_PATH}
+
+logging:
+  level:
+    root: INFO
+    com.courthub: DEBUG
+    org.springframework.kafka: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus
+  endpoint:
+    health:
+      show-details: always
+  metrics:
+    export:
+      prometheus:
+        enabled: true
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+    preferIpAddress: true

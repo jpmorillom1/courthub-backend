@@ -1,0 +1,25 @@
+pluginManagement {
+    repositories {
+        gradlePluginPortal()
+        mavenCentral()
+    }
+}
+
+rootProject.name = "COURTHUB-BACKEND"
+
+include(
+    "libs:common:common-dto",
+    "libs:common:common-exception",
+    "libs:common:common-security",
+    "libs:common:common-web",
+    "services:auth-service",
+    "services:api-gateway",
+    "services:eureka-server",
+    "services:user-service",
+    "services:court-service",
+    "services:booking-service",
+    "services:payment-service",
+    "services:realtime-adapter-service",
+    "services:notification-service",
+    "services:analytics-service"
+)

@@ -1,0 +1,39 @@
+spring:
+  application:
+    name: ANALYTICS-SERVICE
+  data:
+    mongodb:
+      uri: ${MONGODB_URI:mongodb://localhost:27017/courthub_analytics}
+
+jwt:
+  secret: ${JWT_SECRET:your-256-bit-secret-key-must-be-at-least-256-bits-long-for-hmac-sha256}
+  access-token-expiration-minutes: ${JWT_ACCESS_TOKEN_EXPIRATION_MINUTES:15}
+  refresh-token-expiration-days: ${JWT_REFRESH_TOKEN_EXPIRATION_DAYS:30}
+
+server:
+  port: 8087
+  servlet:
+    context-path: /
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics,prometheus
+  endpoint:
+    health:
+      show-details: always
+
+logging:
+  level:
+    root: INFO
+    com.courthub: DEBUG
+
+eureka:
+  client:
+    service-url:
+      defaultZone: ${EUREKA_CLIENT_SERVICEURL_DEFAULTZONE:http://localhost:8761/eureka/}
+  instance:
+    prefer-ip-address: true
+    preferIpAddress: true
+

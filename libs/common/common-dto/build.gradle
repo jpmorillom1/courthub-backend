@@ -1,0 +1,5 @@
+dependencies {
+    // Jakarta Validation
+    implementation 'jakarta.validation:jakarta.validation-api'
+}
+
