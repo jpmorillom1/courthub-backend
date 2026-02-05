@@ -12,7 +12,6 @@ env:
   AWS_REGION: "us-east-1"
 
 jobs:
-  # 1. Identificar qué servicios cambiaron
   detect-changes:
     runs-on: ubuntu-latest
     outputs:
@@ -35,7 +34,6 @@ jobs:
             api-gateway: *lib_trigger
             analytics-service: *lib_trigger
 
-  # 2. Build, Test y Deploy
   build-and-deploy:
     needs: detect-changes
     if: ${{ needs.detect-changes.outputs.services != '[]' }}
@@ -60,7 +58,6 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Run Unit Tests
-        # Solo corre tests en servicios críticos definidos
         if: contains(fromJSON('["user-service", "booking-service", "court-service", "notification-service"]'), matrix.service)
         run: ./gradlew :services:${{ matrix.service }}:test
 
@@ -78,9 +75,7 @@ jobs:
           docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/courthub-${{ matrix.service }}:prod -f services/${{ matrix.service }}/Dockerfile .
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/courthub-${{ matrix.service }}:prod
 
-      # 3. Despliegue para servicios en Red Privada (vía Bastion)
       - name: Deploy via Bastion Tunnel
-        if: matrix.service != 'api-gateway'
         uses: appleboy/ssh-action@master
         with:
           host: ${{
@@ -90,17 +85,22 @@ jobs:
             }}
           username: ec2-user
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+
           proxy_host: ${{ secrets.BASTION_IP }}
           proxy_username: ec2-user
           proxy_key: ${{ secrets.SSH_PRIVATE_KEY }}
+
+          port: 22
+          proxy_port: 22
+          timeout: 60s
+
           script: |
-            echo "Conectado a: $(hostname -f) via Bastion"
+            echo "Login exitoso en el destino: $(hostname -I)"
             cd /opt/courthub
             docker compose pull ${{ matrix.service }}
             docker compose up -d ${{ matrix.service }}
             docker image prune -f
 
-      # 4. Despliegue especial para API Gateway (AWS CLI directo)
       - name: Refresh API Gateway ASG
         if: matrix.service == 'api-gateway'
         run: |
@@ -110,4 +110,4 @@ jobs:
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }} # Obligatorio en Academy
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }}
