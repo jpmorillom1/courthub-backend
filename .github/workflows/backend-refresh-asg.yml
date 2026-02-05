@@ -1,4 +1,4 @@
-name: "Backend Selective CD - Bastion & Tests"
+name: Backend Selective CD - Bastion & Tests
 
 on:
   push:
@@ -7,6 +7,9 @@ on:
       - "services/**"
       - "libs/**"
       - "build.gradle"
+
+env:
+  AWS_REGION: "us-east-1"
 
 jobs:
   # 1. Identificar qué servicios cambiaron
@@ -57,6 +60,7 @@ jobs:
         run: chmod +x ./gradlew
 
       - name: Run Unit Tests
+        # Solo corre tests en servicios críticos definidos
         if: contains(fromJSON('["user-service", "booking-service", "court-service", "notification-service"]'), matrix.service)
         run: ./gradlew :services:${{ matrix.service }}:test
 
@@ -79,7 +83,6 @@ jobs:
         if: matrix.service != 'api-gateway'
         uses: appleboy/ssh-action@master
         with:
-          # Determinamos la IP privada destino según el stack al que pertenece el servicio
           host: ${{
             (matrix.service == 'user-service' || matrix.service == 'auth-service') && secrets.IDENTITY_STACK_IP ||
             (matrix.service == 'court-service' || matrix.service == 'booking-service' || matrix.service == 'payment-service') && secrets.CORE_STACK_IP ||
@@ -87,7 +90,6 @@ jobs:
             }}
           username: ec2-user
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          # Configuración del túnel (Jump Server)
           proxy_host: ${{ secrets.BASTION_IP }}
           proxy_username: ec2-user
           proxy_key: ${{ secrets.SSH_PRIVATE_KEY }}
@@ -102,7 +104,10 @@ jobs:
       - name: Refresh API Gateway ASG
         if: matrix.service == 'api-gateway'
         run: |
-          aws autoscaling start-instance-refresh --auto-scaling-group-name courthub-gateway-asg --region us-east-1
+          aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name courthub-gateway-asg \
+            --region ${{ env.AWS_REGION }}
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.AWS_SESSION_TOKEN }} # Obligatorio en Academy
