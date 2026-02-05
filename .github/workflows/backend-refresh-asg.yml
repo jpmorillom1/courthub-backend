@@ -76,6 +76,7 @@ jobs:
           docker push ${{ secrets.DOCKERHUB_USERNAME }}/courthub-${{ matrix.service }}:prod
 
       - name: Deploy via Bastion Tunnel
+        if: matrix.service != 'api-gateway'
         uses: appleboy/ssh-action@master
         with:
           host: ${{
