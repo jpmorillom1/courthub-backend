@@ -18,7 +18,7 @@ server:
 
 firebase:
   database-url: ${FIREBASE_DATABASE_URL}
-  credentials-path: "classpath:courthub-db8c7-firebase-adminsdk-fbsvc-c01bf8b26a.json"
+  credentials-path: ${FIREBASE_CREDENTIALS_PATH}
 
 logging:
   level:
