@@ -41,7 +41,7 @@ public class BookingController {
     })
     public ResponseEntity<java.util.Map<String, String>> hello() {
         java.util.Map<String, String> response = new java.util.HashMap<>();
-        response.put("message", "Hello World from Booking Service");
+        response.put("message", "Hello World from Booking Service...testing");
         response.put("service", "booking-service");
         return ResponseEntity.ok(response);
     }
