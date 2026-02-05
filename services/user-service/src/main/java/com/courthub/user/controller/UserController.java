@@ -42,7 +42,7 @@ public class UserController {
     @ApiResponse(responseCode = "200", description = "Hello message returned")
     public ResponseEntity<Map<String, String>> hello() {
         Map<String, String> response = new HashMap<>();
-        response.put("message", "Hello World from User Service");
+        response.put("message", "Hello World from User Service !! im done with this pipelines :,) sorry for all those trash commits");
         response.put("service", "user-service");
         return ResponseEntity.ok(response);
     }
