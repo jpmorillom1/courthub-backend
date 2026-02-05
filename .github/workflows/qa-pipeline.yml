@@ -90,7 +90,7 @@ jobs:
           proxy_username: ec2-user
           proxy_key: ${{ secrets.QA_SSH_PRIVATE_KEY }}
           script: |
-            cd /opt/courthub-qa
+            cd /opt/courthub
             COMPOSE_BIN="/usr/local/bin/docker-compose"
             $COMPOSE_BIN pull ${{ matrix.service }}
             $COMPOSE_BIN up -d ${{ matrix.service }}
@@ -99,9 +99,7 @@ jobs:
       - name: Refresh API Gateway ASG (QA)
         if: matrix.service == 'api-gateway'
         run: |
-          aws autoscaling start-instance-refresh \
-            --auto-scaling-group-name courthub-gateway-asg-qa \
-            --region ${{ env.AWS_REGION }}
+          aws autoscaling start-instance-refresh --auto-scaling-group-name "courthub-gateway-asg" --region "${{ env.AWS_REGION }}"
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.QA_AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.QA_AWS_SECRET_ACCESS_KEY }}
