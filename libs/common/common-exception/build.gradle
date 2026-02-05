@@ -1,0 +1,4 @@
+dependencies {
+    // No external dependencies - pure Java exceptions
+}
+

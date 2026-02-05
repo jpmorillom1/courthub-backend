@@ -1,0 +1,108 @@
+name: Backend Selective CD - QA Environment
+
+on:
+  push:
+    branches: ["qa"]
+    paths:
+      - "services/**"
+      - "libs/**"
+      - "build.gradle"
+
+env:
+  AWS_REGION: "us-east-1"
+
+jobs:
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      services: ${{ steps.filter.outputs.changes }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            user-service: &lib_trigger
+              - 'services/user-service/**'
+              - 'libs/**'
+            auth-service: *lib_trigger
+            court-service: *lib_trigger
+            booking-service: *lib_trigger
+            payment-service: *lib_trigger
+            notification-service: *lib_trigger
+            realtime-adapter-service: *lib_trigger
+            api-gateway: *lib_trigger
+            analytics-service: *lib_trigger
+
+  build-and-deploy-qa:
+    needs: detect-changes
+    if: ${{ needs.detect-changes.outputs.services != '[]' }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: true
+      matrix:
+        service: ${{ fromJSON(needs.detect-changes.outputs.services) }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: "temurin"
+          cache: "gradle"
+
+      - name: Make gradlew executable
+        run: chmod +x ./gradlew
+
+      - name: Run Unit Tests
+        if: contains(fromJSON('["user-service", "booking-service", "court-service", "notification-service"]'), matrix.service)
+        run: ./gradlew :services:${{ matrix.service }}:test
+
+      - name: Build with Gradle
+        run: ./gradlew :services:${{ matrix.service }}:build -x test
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and Push Docker image (QA)
+        run: |
+          docker build -t ${{ secrets.DOCKERHUB_USERNAME }}/courthub-${{ matrix.service }}:qa -f services/${{ matrix.service }}/Dockerfile .
+          docker push ${{ secrets.DOCKERHUB_USERNAME }}/courthub-${{ matrix.service }}:qa
+
+      - name: Deploy to QA via Bastion
+        if: matrix.service != 'api-gateway'
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{
+            (matrix.service == 'user-service' || matrix.service == 'auth-service') && secrets.QA_IDENTITY_STACK_IP ||
+            (matrix.service == 'court-service' || matrix.service == 'booking-service' || matrix.service == 'payment-service') && secrets.QA_CORE_STACK_IP ||
+            secrets.QA_ASYNC_STACK_IP
+            }}
+          username: ec2-user
+          key: ${{ secrets.QA_SSH_PRIVATE_KEY }}
+          proxy_host: ${{ secrets.QA_BASTION_IP }}
+          proxy_username: ec2-user
+          proxy_key: ${{ secrets.QA_SSH_PRIVATE_KEY }}
+          script: |
+            cd /opt/courthub-qa
+            COMPOSE_BIN="/usr/local/bin/docker-compose"
+            $COMPOSE_BIN pull ${{ matrix.service }}
+            $COMPOSE_BIN up -d ${{ matrix.service }}
+            docker image prune -f
+
+      - name: Refresh API Gateway ASG (QA)
+        if: matrix.service == 'api-gateway'
+        run: |
+          aws autoscaling start-instance-refresh \
+            --auto-scaling-group-name courthub-gateway-asg-qa \
+            --region ${{ env.AWS_REGION }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.QA_AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.QA_AWS_SECRET_ACCESS_KEY }}
+          AWS_SESSION_TOKEN: ${{ secrets.QA_AWS_SESSION_TOKEN }}
