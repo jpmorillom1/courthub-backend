@@ -177,23 +177,34 @@ public class DataSyncService {
     }
 
     private void processPeakHours(List<BookingInternalDTO> bookings) {
-        Map<String, Integer> hourlyBookings = new HashMap<>();
+        Map<String, Map<String, Integer>> dayOfWeekData = new HashMap<>();
+        Map<String, Long> totalBookingsByDay = new HashMap<>();
+
         for (BookingInternalDTO booking : bookings) {
             if ("CONFIRMED".equals(booking.status())) {
+                String dayOfWeek = booking.date().getDayOfWeek().toString();
                 String hour = String.format("%02d:00", booking.startTime().getHour());
-                hourlyBookings.merge(hour, 1, Integer::sum);
+
+                dayOfWeekData.computeIfAbsent(dayOfWeek, k -> new HashMap<>())
+                    .merge(hour, 1, Integer::sum);
+
+                totalBookingsByDay.merge(dayOfWeek, 1L, Long::sum);
             }
         }
 
-        LocalDate today = LocalDate.now();
-        PeakHoursMetric metric = peakHoursMetricRepository
-            .findByDate(today)
-            .orElse(new PeakHoursMetric());
+        for (String dayOfWeek : dayOfWeekData.keySet()) {
+            PeakHoursMetric metric = peakHoursMetricRepository
+                .findByDayOfWeek(dayOfWeek)
+                .orElse(new PeakHoursMetric(dayOfWeek, new HashMap<>()));
 
-        metric.setDate(today);
-        metric.setHourlyBookings(hourlyBookings);
+            metric.setDayOfWeek(dayOfWeek);
+            metric.setHourlyBookings(dayOfWeekData.get(dayOfWeek));
+            metric.setTotalBookings(totalBookingsByDay.get(dayOfWeek));
 
-        peakHoursMetricRepository.save(metric);
+            peakHoursMetricRepository.save(metric);
+            log.debug("Processed peak hours for dayOfWeek={}, totalBookings={}", 
+                dayOfWeek, totalBookingsByDay.get(dayOfWeek));
+        }
     }
 
     private void processFacultyUsage(List<BookingInternalDTO> bookings, Map<String, UserInternalDTO> userMap) {
