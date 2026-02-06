@@ -18,25 +18,45 @@ jobs:
       services: ${{ steps.filter.outputs.changes }}
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
       - uses: dorny/paths-filter@v3
         id: filter
         with:
+          base: ${{ github.event.before }}
           filters: |
-            user-service: &lib_trigger
+            user-service:
               - 'services/user-service/**'
               - 'libs/**'
-            auth-service: *lib_trigger
-            court-service: *lib_trigger
-            booking-service: *lib_trigger
-            payment-service: *lib_trigger
-            notification-service: *lib_trigger
-            realtime-adapter-service: *lib_trigger
-            api-gateway: *lib_trigger
-            analytics-service: *lib_trigger
+            auth-service:
+              - 'services/auth-service/**'
+              - 'libs/**'
+            court-service:
+              - 'services/court-service/**'
+              - 'libs/**'
+            booking-service:
+              - 'services/booking-service/**'
+              - 'libs/**'
+            payment-service:
+              - 'services/payment-service/**'
+              - 'libs/**'
+            notification-service:
+              - 'services/notification-service/**'
+              - 'libs/**'
+            realtime-adapter-service:
+              - 'services/realtime-adapter-service/**'
+              - 'libs/**'
+            api-gateway:
+              - 'services/api-gateway/**'
+              - 'libs/**'
+            analytics-service:
+              - 'services/analytics-service/**'
+              - 'libs/**'
 
   build-and-deploy-qa:
     needs: detect-changes
-    if: ${{ needs.detect-changes.outputs.services != '[]' }}
+    if: ${{ needs.detect-changes.outputs.services != '[]' && needs.detect-changes.outputs.services != '' }}
     runs-on: ubuntu-latest
     strategy:
       fail-fast: true
