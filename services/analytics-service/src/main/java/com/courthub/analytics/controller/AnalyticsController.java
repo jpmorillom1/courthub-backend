@@ -37,7 +37,7 @@ public class AnalyticsController {
     })
     public ResponseEntity<java.util.Map<String, String>> hello() {
         java.util.Map<String, String> response = new java.util.HashMap<>();
-        response.put("message", "Hello World from Analytics Service");
+        response.put("message", "Hello World from Analytics Service!");
         response.put("service", "analytics-service");
         return ResponseEntity.ok(response);
     }
