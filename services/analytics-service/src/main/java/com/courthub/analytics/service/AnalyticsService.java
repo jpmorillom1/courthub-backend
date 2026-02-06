@@ -92,18 +92,27 @@ public class AnalyticsService {
     }
 
     private HeatmapResponse buildHeatmap(LocalDate date) {
-        Optional<PeakHoursMetric> peakMetric = peakHoursMetricRepository.findByDate(date);
+        Map<String, Map<String, Integer>> dayHourMatrix = new LinkedHashMap<>();
 
-        Map<String, Map<String, Integer>> dayHourMatrix = new HashMap<>();
-        Map<String, Integer> hourCounts = new HashMap<>();
+        String[] daysOfWeek = {"MONDAY", "TUESDAY", "WEDNESDAY", "THURSDAY", "FRIDAY", "SATURDAY", "SUNDAY"};
 
-        if (peakMetric.isPresent() && peakMetric.get().getHourlyBookings() != null) {
-            hourCounts.putAll(peakMetric.get().getHourlyBookings());
+        for (String dayOfWeek : daysOfWeek) {
+            Optional<PeakHoursMetric> peakMetric = peakHoursMetricRepository.findByDayOfWeek(dayOfWeek);
+
+            Map<String, Integer> hourCounts = new TreeMap<>((h1, h2) -> {
+                int hour1 = Integer.parseInt(h1.split(":")[0]);
+                int hour2 = Integer.parseInt(h2.split(":")[0]);
+                return Integer.compare(hour1, hour2);
+            });
+
+            if (peakMetric.isPresent() && peakMetric.get().getHourlyBookings() != null) {
+                hourCounts.putAll(peakMetric.get().getHourlyBookings());
+            }
+
+            dayHourMatrix.put(dayOfWeek, hourCounts);
         }
 
-        String dayOfWeek = date.getDayOfWeek().toString();
-        dayHourMatrix.put(dayOfWeek, hourCounts);
-
+        log.debug("Built heatmap with {} days of week data", dayHourMatrix.size());
         return new HeatmapResponse(dayHourMatrix);
     }
 
